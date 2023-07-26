@@ -7,11 +7,11 @@ This version is a continuation of the powershell script attempt utilizing C# .NE
 
 In continuing the pursuit of a ChatGPT generated application some things have become clear. OpenAI is intentionally limiting response length and thus overall bandwidth of code revision, "Prompt" clarity is vital in achieving the desired results. When an error is encountered in the build all error can be resolved by ChatGPT if given the error and/or resending all of the modified code for review. ChatGPT can at times be ambiguous about where the code revision snippet is supposed to be. To fix this you simply need to send it the full code and request it send you the full or the entire changed code back instead of just a snippet. 
 
-v1.1.0.0 Change Log
--Does not display Please wait until after results - Fixed
--App says not responding during pings - Fixed
--Add number of pings field with default value of 200 - Done
--Correct GUI spacing for new ping field - Fixed
--Correct "results message" showing before actual results - Fixed
--Added version number to title - Done
--Add slow/monitor mode - Future feature as currently in flood mode for fastest results
+v1.1.0.0 Change Log<br>
+-Does not display Please wait until after results - Fixed<br>
+-App says not responding during pings - Fixed<br>
+-Add number of pings field with default value of 200 - Done<br>
+-Correct GUI spacing for new ping field - Fixed<br>
+-Correct "results message" showing before actual results - Fixed<br>
+-Added version number to title - Done<br>
+-Add slow/monitor mode - Future feature as currently in flood mode for fastest results<br>
