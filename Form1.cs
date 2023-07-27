@@ -29,6 +29,7 @@ namespace PingTool.NET
             int secondDotIndex = version.IndexOf(".", firstDotIndex + 1);
             string minorVersion = version.Substring(0, secondDotIndex);
             this.Text = $"Ping Tool v{minorVersion}";
+            this.Icon = Properties.Resources.SPTMulti;
         }
 
         private async void runPingButton_Click(object sender, EventArgs e)
