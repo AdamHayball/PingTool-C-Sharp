@@ -11,9 +11,10 @@ In continuing the pursuit of a ChatGPT generated application some things have be
 =============================
 
 v1.2.0 Change Log:<br></br>
-**New System Requirements**
-Windows 7 or higher
-Dual core or better CPU
+
+**New System Requirements**<br></br>
+Windows 7 or higher<br></br>
+Dual core or better CPU<br></br>
 
 -Added slow/monitor mode<br></br>
 -Added cancel button<br></br>
