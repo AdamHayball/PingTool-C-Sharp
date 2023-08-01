@@ -15,6 +15,7 @@ v1.2.0 Change Log:<br></br>
 **New System Requirements**<br></br>
 Windows 7 or higher<br></br>
 Dual core or better CPU<br></br>
+.NET upgrade 4.7.2 > 6.0<br></br>
 
 -Added slow/monitor mode<br></br>
 -Added cancel button<br></br>
