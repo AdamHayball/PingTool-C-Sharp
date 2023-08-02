@@ -36,7 +36,7 @@ namespace PingTool.NET
             textBoxNumPings.Text = "200"; // Set the default value of the number of pings
 
             // Set version number and icon
-            this.Text = $"Ping Tool v1.2.0";
+            this.Text = $"Ping Tool v1.2.1";
             this.Icon = Properties.Resources.SPTMulti;
 
             // Initialize and set up the pingChart control
@@ -53,6 +53,13 @@ namespace PingTool.NET
 
             pingChart.ChartAreas["PingChartArea"].AxisX.Title = "Ping Number";
             pingChart.ChartAreas["PingChartArea"].AxisY.Title = "Response Time (ms)";
+
+            // Add the color legend at the bottom of the chart
+            var legend = new Legend("Legend");
+            legend.Docking = Docking.Bottom;
+            legend.Alignment = StringAlignment.Center;
+            legend.LegendStyle = LegendStyle.Row;
+            pingChart.Legends.Add(legend);
             this.Controls.Add(pingChart); // Add the chart control to the form
         }
 
@@ -121,33 +128,9 @@ namespace PingTool.NET
             var series = new Series(seriesName);
             series.ChartType = SeriesChartType.Line;
             series.Color = color;
+            series.BorderWidth = 2; // Set the line thickness to 2
             pingChart.Series.Add(series);
         }
-        private void InitializeChartSeries()
-        {
-            // Initialize and set up the pingChart control
-            pingChart = new Chart();
-            pingChart.Location = new Point(20, this.ClientSize.Height - 210); // Set the chart location at the bottom
-            pingChart.Size = new Size(380, 200); // Set the size of the chart
-            pingChart.ChartAreas.Add("PingChartArea");
-
-            // Add the first series for Usable IP with blue color
-            var seriesUsableIP = new Series("UsableIP");
-            seriesUsableIP.ChartType = SeriesChartType.Line;
-            seriesUsableIP.Color = Color.Blue;
-            pingChart.Series.Add(seriesUsableIP);
-
-            // Add the second series for Gateway IP with green color
-            var seriesGatewayIP = new Series("GatewayIP");
-            seriesGatewayIP.ChartType = SeriesChartType.Line;
-            seriesGatewayIP.Color = Color.Green;
-            pingChart.Series.Add(seriesGatewayIP);
-
-            pingChart.ChartAreas["PingChartArea"].AxisX.Title = "Ping Number";
-            pingChart.ChartAreas["PingChartArea"].AxisY.Title = "Response Time (ms)";
-            this.Controls.Add(pingChart); // Add the chart control to the form
-        }
-
         // Add the "Run Ping" button click event handler
         private async void runPingButton_Click(object sender, EventArgs e)
         {
