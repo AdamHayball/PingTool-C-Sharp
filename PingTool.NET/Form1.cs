@@ -1,15 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.IO;
-using System.Linq;
-using System.Net.NetworkInformation;
+﻿using System.Net.NetworkInformation;
+using System.Reflection;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Windows.Forms;
 using System.Windows.Forms.DataVisualization.Charting;
- 
+
 namespace PingTool.NET
 {
     public partial class Form1 : Form
@@ -18,27 +11,34 @@ namespace PingTool.NET
         private TextBox textBoxGatewayIP;
         private TextBox textBoxUsableIP;
         private TextBox textBoxNumPings; // Added the textBoxNumPings field
+        private TextBox textBoxPacketSize; // Add the textBoxPacketSize field
         private Button buttonRunPing;
         private Button buttonReset;
         private Button buttonCancel; // Add the buttonCancel field
         private Label labelUsableIP;
         private Label labelGatewayIP;
         private Label labelNumPings; // Added the labelNumPings field
+        private Label labelPacketSize; // Add the labelPacketSize field
         private CancellationTokenSource cancellationTokenSource;
         private CheckBox checkBoxSlowPings; // Add the checkBoxSlowPings field
         private CheckBox checkBoxSaveToLogFile; // Add the checkBoxSaveToLogFile field
         private Chart pingChart; // Add the pingChart field
         private List<Task<string>> pingTasks = new List<Task<string>>(); // Moved pingTasks to class level
 
+
         public Form1()
         {
             InitializeComponent();
             textBoxNumPings.Text = "200"; // Set the default value of the number of pings
 
-            // Set version number and icon
-            this.Text = $"Ping Tool v1.2.1";
-            this.Icon = Properties.Resources.SPTMulti;
+            // Set version number in the title bar without the revision number
+            Version version = Assembly.GetExecutingAssembly().GetName().Version;
+            string versionNumber = $"{version.Major}.{version.Minor}.{version.Build}";
+            this.Text = $"Ping Tool v{versionNumber}";
 
+            // Set titlebar icon
+            this.Icon = Properties.Resources.SPTMulti;
+#if WINDOWS
             // Initialize and set up the pingChart control
             pingChart = new Chart();
             pingChart.Location = new Point(20, this.ClientSize.Height - 210); // Set the chart location at the bottom
@@ -61,6 +61,10 @@ namespace PingTool.NET
             legend.LegendStyle = LegendStyle.Row;
             pingChart.Legends.Add(legend);
             this.Controls.Add(pingChart); // Add the chart control to the form
+#else
+            // Disable the chart on non-Windows platforms
+            // You can add other platform-specific behaviors here if needed.
+#endif
         }
 
         private void DisplayResultsAfterCancellation()
@@ -122,18 +126,33 @@ namespace PingTool.NET
         }
         private void AddSeriesToChart(string seriesName, Color color)
         {
-            if (!pingChart.Series.IsUniqueName(seriesName))
-                return;
+            // Check the platform at runtime and add the series only for Windows
+            if (OperatingSystem.IsWindows())
+            {
+                if (!pingChart.Series.IsUniqueName(seriesName))
+                    return;
 
-            var series = new Series(seriesName);
-            series.ChartType = SeriesChartType.Line;
-            series.Color = color;
-            series.BorderWidth = 2; // Set the line thickness to 2
-            pingChart.Series.Add(series);
+                var series = new Series(seriesName);
+                series.ChartType = SeriesChartType.Line;
+                series.Color = color;
+                series.BorderWidth = 2; // Set the line thickness to 2
+                pingChart.Series.Add(series);
+            }
         }
         // Add the "Run Ping" button click event handler
         private async void runPingButton_Click(object sender, EventArgs e)
         {
+            // Disable the "Run Ping" button to prevent multiple clicks while pinging
+            buttonRunPing.Enabled = false;
+
+            // Get the packet size from the textBoxPacketSize control
+            if (!int.TryParse(textBoxPacketSize.Text, out int packetSize))
+            {
+                MessageBox.Show("Please enter a valid number for the packet size.");
+                buttonRunPing.Enabled = true; // Enable the button again
+                return;
+            }
+
             string usableIP = textBoxUsableIP.Text.Trim();
             string gatewayIP = textBoxGatewayIP.Text.Trim();
 
@@ -143,71 +162,76 @@ namespace PingTool.NET
                 return;
             }
 
+            // Clear any previous ping results and chart data
             outputTextBox.Text = "Pinging IPs. Please Wait...";
-
+            ClearPingChart();
             cancellationTokenSource?.Cancel();
             cancellationTokenSource = new CancellationTokenSource();
-            bool validIPProvided = false;
-            int validIpCount = 0; // Variable to track the number of valid IP addresses found
-            StringBuilder resultBuilder = new StringBuilder();
 
-            ClearPingChart();
-            pingTasks.Clear(); // Clear any existing tasks before adding new ones
+            // Clear existing ping tasks
+            pingTasks.Clear();
 
+            // Add ping tasks for each provided IP address
             if (!string.IsNullOrEmpty(usableIP))
             {
-                Task<string> usableIpTask = RunPingAsync(usableIP, numPings, cancellationTokenSource.Token, pingChart.Series["UsableIP"]);
-                pingTasks.Add(usableIpTask);
+                pingTasks.Add(RunPingAsync(usableIP, numPings, packetSize, cancellationTokenSource.Token, pingChart.Series["UsableIP"]));
             }
 
             if (!string.IsNullOrEmpty(gatewayIP))
             {
-                Task<string> gatewayIpTask = RunPingAsync(gatewayIP, numPings, cancellationTokenSource.Token, pingChart.Series["GatewayIP"]);
-                pingTasks.Add(gatewayIpTask);
+                pingTasks.Add(RunPingAsync(gatewayIP, numPings, packetSize, cancellationTokenSource.Token, pingChart.Series["GatewayIP"]));
             }
+
+            // Declare the resultBuilder outside the try block
+            StringBuilder resultBuilder = new StringBuilder();
 
             try
             {
-                if (pingTasks.Count > 0)
+                // Execute all ping tasks concurrently
+                await Task.WhenAll(pingTasks);
+
+                // Process the results and update the UI
+                bool validIPProvided = false;
+                int validIpCount = 0; // Variable to track the number of valid IP addresses found
+
+                foreach (var task in pingTasks)
                 {
-
-                    await Task.WhenAll(pingTasks);
-
-                    foreach (var task in pingTasks)
+                    if (!string.IsNullOrEmpty(task.Result))
                     {
-                        if (!string.IsNullOrEmpty(task.Result))
+                        validIPProvided = true;
+                        validIpCount++; // Increment the count for each valid IP address found
+                        string ipType = (task == pingTasks[0]) ? "Usable" : "Gateway";
+                        resultBuilder.AppendLine($"Results for {ipType} IP ({(task == pingTasks[0] ? usableIP : gatewayIP)}):");
+                        resultBuilder.AppendLine(task.Result);
+                        if (validIpCount < pingTasks.Count)
                         {
-                            validIPProvided = true;
-                            validIpCount++; // Increment the count for each valid IP address found
-                            string ipType = (task == pingTasks[0]) ? "Usable" : "Gateway";
-                            resultBuilder.AppendLine($"Results for {ipType} IP ({(task == pingTasks[0] ? usableIP : gatewayIP)}):");
-                            resultBuilder.AppendLine(task.Result);
-                            if (validIpCount < pingTasks.Count)
-                            {
-                                // Add separator only if there are more valid IP addresses to display
-                                resultBuilder.AppendLine("=================");
-                            }
+                            // Add separator only if there are more valid IP addresses to display
+                            resultBuilder.AppendLine("=================");
                         }
                     }
-
-                    if (validIPProvided && pingTasks.All(task => string.IsNullOrEmpty(task.Result)))
-                    {
-                        resultBuilder.AppendLine("Request Timed Out (all pings failed).");
-                    }
-
-                    if (checkBoxSaveToLogFile.Checked)
-                    {
-                        SavePingOutputToLogFile(resultBuilder.ToString());
-                    }
                 }
+
+                if (validIPProvided && pingTasks.All(task => string.IsNullOrEmpty(task.Result)))
+                {
+                    resultBuilder.AppendLine("Request Timed Out (all pings failed).");
+                }
+
+                if (checkBoxSaveToLogFile.Checked)
+                {
+                    SavePingOutputToLogFile(resultBuilder.ToString());
+                }
+
+                outputTextBox.Text = resultBuilder.ToString();
             }
             catch (OperationCanceledException)
             {
-                resultBuilder.AppendLine("Ping canceled by user.");
+                // Handle the cancellation exception if needed
+                outputTextBox.Text = "Ping canceled by user.";
             }
             catch (Exception ex)
             {
-                resultBuilder.AppendLine($"Error occurred during ping: {ex.Message}");
+                // Handle other exceptions that might occur during ping
+                outputTextBox.Text = $"Error occurred during ping: {ex.Message}";
             }
             finally
             {
@@ -215,14 +239,16 @@ namespace PingTool.NET
                 {
                     outputTextBox.Text = resultBuilder.ToString();
                 }
+                // Enable the "Run Ping" button after ping tasks are completed or canceled
+                buttonRunPing.Enabled = true;
             }
         }
 
-        private async Task<string> RunPingAsync(string ipAddress, int numPings, CancellationToken cancellationToken, Series series)
+        private async Task<string> RunPingAsync(string ipAddress, int numPings, int packetSize, CancellationToken cancellationToken, Series series)
         {
-            return await Task.Run(() => RunPing(ipAddress, numPings, cancellationToken, series), cancellationToken);
+            return await Task.Run(() => RunPing(ipAddress, numPings, packetSize, cancellationToken, series), cancellationToken);
         }
-        private string RunPing(string ipAddress, int numPings, CancellationToken cancellationToken, Series series)
+        private string RunPing(string ipAddress, int numPings, int packetSize, CancellationToken cancellationToken, Series series)
         {
             string pingResults = "";
             var pingSender = new Ping();
@@ -243,7 +269,7 @@ namespace PingTool.NET
                     break;
                 }
 
-                var reply = pingSender.Send(ipAddress, 1000, new byte[32], pingOptions);
+                var reply = pingSender.Send(ipAddress, 1000, new byte[packetSize], pingOptions);
 
                 if (reply.Status == IPStatus.Success)
                 {
@@ -305,12 +331,16 @@ namespace PingTool.NET
         // Update the UpdatePingChart method to take ipAddress, pingNumber, responseTime, and series as parameters
         private void UpdatePingChart(string ipAddress, int pingNumber, long responseTime, Series series)
         {
-            // Get the appropriate series based on the ipAddress
-            series = series == null ? (ipAddress == textBoxUsableIP.Text.Trim() ? pingChart.Series["UsableIP"] : pingChart.Series["GatewayIP"]) : series;
+            // Check the platform at runtime and update the chart only for Windows
+            if (OperatingSystem.IsWindows())
+            {
+                // Get the appropriate series based on the ipAddress
+                series = series == null ? (ipAddress == textBoxUsableIP.Text.Trim() ? pingChart.Series["UsableIP"] : pingChart.Series["GatewayIP"]) : series;
 
-            // Create a new data point with the given X and Y values and add it to the chart series
-            DataPoint dataPoint = new DataPoint(pingNumber, responseTime);
-            series.Points.Add(dataPoint);
+                // Create a new data point with the given X and Y values and add it to the chart series
+                DataPoint dataPoint = new DataPoint(pingNumber, responseTime);
+                series.Points.Add(dataPoint);
+            }
         }
         private void ClearPingChart()
         {
@@ -374,6 +404,7 @@ namespace PingTool.NET
 
         private void InitializeComponent()
         {
+            pingChart = new Chart();
             textBoxUsableIP = new TextBox();
             textBoxGatewayIP = new TextBox();
             buttonRunPing = new Button();
@@ -390,7 +421,7 @@ namespace PingTool.NET
             // 
             // textBoxUsableIP
             // 
-            textBoxUsableIP.Location = new Point(233, 23);
+            textBoxUsableIP.Location = new Point(233, 10);
             textBoxUsableIP.Margin = new Padding(4, 3, 4, 3);
             textBoxUsableIP.Name = "textBoxUsableIP";
             textBoxUsableIP.Size = new Size(174, 23);
@@ -398,11 +429,28 @@ namespace PingTool.NET
             // 
             // textBoxGatewayIP
             // 
-            textBoxGatewayIP.Location = new Point(233, 69);
+            textBoxGatewayIP.Location = new Point(233, 40);
             textBoxGatewayIP.Margin = new Padding(4, 3, 4, 3);
             textBoxGatewayIP.Name = "textBoxGatewayIP";
             textBoxGatewayIP.Size = new Size(174, 23);
             textBoxGatewayIP.TabIndex = 1;
+            // 
+            // textBoxNumPings
+            // 
+            textBoxNumPings.Location = new Point(233, 70);
+            textBoxNumPings.Margin = new Padding(4, 3, 4, 3);
+            textBoxNumPings.Name = "textBoxNumPings";
+            textBoxNumPings.Size = new Size(174, 23);
+            textBoxNumPings.TabIndex = 5;
+            //
+            // textBoxPacketSize
+            //
+            textBoxPacketSize = new TextBox();
+            textBoxPacketSize.Location = new Point(233, 100); // Adjust the location to align with other TextBox controls
+            textBoxPacketSize.Size = new Size(174, 23);
+            textBoxPacketSize.TabIndex = 11;
+            textBoxPacketSize.Text = "32"; // Set the default packet size
+            this.Controls.Add(textBoxPacketSize);
             // 
             // buttonRunPing
             // 
@@ -439,7 +487,7 @@ namespace PingTool.NET
             // labelUsableIP
             // 
             labelUsableIP.AutoSize = true;
-            labelUsableIP.Location = new Point(12, 23);
+            labelUsableIP.Location = new Point(12, 10);
             labelUsableIP.Margin = new Padding(4, 0, 4, 0);
             labelUsableIP.Name = "labelUsableIP";
             labelUsableIP.Size = new Size(58, 15);
@@ -449,7 +497,7 @@ namespace PingTool.NET
             // labelGatewayIP
             // 
             labelGatewayIP.AutoSize = true;
-            labelGatewayIP.Location = new Point(12, 69);
+            labelGatewayIP.Location = new Point(12, 40);
             labelGatewayIP.Margin = new Padding(4, 0, 4, 0);
             labelGatewayIP.Name = "labelGatewayIP";
             labelGatewayIP.Size = new Size(68, 15);
@@ -459,20 +507,20 @@ namespace PingTool.NET
             // labelNumPings
             // 
             labelNumPings.AutoSize = true;
-            labelNumPings.Location = new Point(12, 115);
+            labelNumPings.Location = new Point(12, 70);
             labelNumPings.Margin = new Padding(4, 0, 4, 0);
             labelNumPings.Name = "labelNumPings";
             labelNumPings.Size = new Size(100, 15);
             labelNumPings.TabIndex = 4;
             labelNumPings.Text = "Number of Pings:";
-            // 
-            // textBoxNumPings
-            // 
-            textBoxNumPings.Location = new Point(233, 115);
-            textBoxNumPings.Margin = new Padding(4, 3, 4, 3);
-            textBoxNumPings.Name = "textBoxNumPings";
-            textBoxNumPings.Size = new Size(174, 23);
-            textBoxNumPings.TabIndex = 5;
+            //
+            // Initialize labelPacketSize
+            //
+            labelPacketSize = new Label();
+            labelPacketSize.Location = new Point(12, 100);
+            labelPacketSize.AutoSize = true;
+            labelPacketSize.Text = "Packet Size (bytes):";
+            this.Controls.Add(labelPacketSize);
             // 
             // buttonCancel
             // 
@@ -520,9 +568,11 @@ namespace PingTool.NET
             Controls.Add(buttonRunPing);
             Controls.Add(textBoxGatewayIP);
             Controls.Add(textBoxUsableIP);
+            Controls.Add(textBoxPacketSize);
             Controls.Add(labelGatewayIP);
             Controls.Add(labelUsableIP);
             Controls.Add(labelNumPings);
+            Controls.Add(labelPacketSize);
             Controls.Add(textBoxNumPings);
             Margin = new Padding(4, 3, 4, 3);
             Name = "Form1";

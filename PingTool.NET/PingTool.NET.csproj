@@ -1,66 +1,34 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <TargetFramework>net6.0-windows</TargetFramework>
-    <OutputType>WinExe</OutputType>
-	<Version>1.2.0</Version>
-    <RootNamespace>PingTool</RootNamespace>
-    <AssemblyName>PingTool</AssemblyName>
-    <PublishUrl>publish\</PublishUrl>
-    <Install>true</Install>
-    <InstallFrom>Disk</InstallFrom>
-    <UpdateEnabled>false</UpdateEnabled>
-    <UpdateMode>Foreground</UpdateMode>
-    <UpdateInterval>7</UpdateInterval>
-    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
-    <UpdatePeriodically>false</UpdatePeriodically>
-    <UpdateRequired>false</UpdateRequired>
-    <MapFileExtensions>true</MapFileExtensions>
-    <ApplicationRevision>0</ApplicationRevision>
-    <ApplicationVersion>1.2.0</ApplicationVersion>
-    <IsWebBootstrapper>false</IsWebBootstrapper>
-    <UseApplicationTrust>false</UseApplicationTrust>
-    <BootstrapperEnabled>true</BootstrapperEnabled>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <UseWindowsForms>true</UseWindowsForms>
-    <ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
-  </PropertyGroup>
-  <PropertyGroup>
-	<Version>1.2.0</Version>
-    <ApplicationIcon>Resources\SPTMulti.ico</ApplicationIcon>
-    <AssemblyTitle>PingTool.NET</AssemblyTitle>
-    <Product>PingTool.NET</Product>
-    <Copyright>Copyright © Adam Hayball 2023</Copyright>
-    <AssemblyVersion>1.2.0</AssemblyVersion>
-    <FileVersion>1.2.0</FileVersion>
-  </PropertyGroup>
-  <ItemGroup>
-    <BootstrapperPackage Include=".NETFramework,Version=v4.7.2">
-      <Visible>False</Visible>
-      <ProductName>Microsoft .NET Framework 4.7.2 %28x86 and x64%29</ProductName>
-      <Install>true</Install>
-    </BootstrapperPackage>
-    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
-      <Visible>False</Visible>
-      <ProductName>.NET Framework 3.5 SP1</ProductName>
-      <Install>false</Install>
-    </BootstrapperPackage>
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
-    <PackageReference Include="System.Data.DataSetExtensions" Version="4.5.0" />
-    <PackageReference Include="WinForms.DataVisualization" Version="1.8.0" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Update="Properties\Settings.Designer.cs">
-      <DesignTimeSharedInput>True</DesignTimeSharedInput>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>Settings.settings</DependentUpon>
-    </Compile>
-  </ItemGroup>
-  <ItemGroup>
-    <None Update="Properties\Settings.settings">
-      <Generator>SettingsSingleFileGenerator</Generator>
-      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
-    </None>
-  </ItemGroup>
+﻿<Project Sdk="Microsoft.NET.Sdk" >
+		<PropertyGroup>
+			<OutputType>WinExe</OutputType>
+			<TargetFramework>net6.0-windows</TargetFramework>
+			<RootNamespace>PingTool</RootNamespace>
+			<AssemblyName>PingTool</AssemblyName>
+			<Nullable>enable</Nullable>
+			<UseWindowsForms>true</UseWindowsForms>
+			<ImplicitUsings>enable</ImplicitUsings>
+			<ApplicationIcon>Resources\SPTMulti.ico</ApplicationIcon>
+			<Copyright>Copyright © Adam Hayball 2023</Copyright>
+			<AssemblyVersion>1.3.0</AssemblyVersion>
+			<AssemblyInformationalVersion>1.3.0-Beta</AssemblyInformationalVersion>
+			<FileVersion>1.3.0</FileVersion>
+		</PropertyGroup>
+		<ItemGroup>
+			<PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+			<PackageReference Include="System.Data.DataSetExtensions" Version="4.5.0" />
+			<PackageReference Include="WinForms.DataVisualization" Version="1.8.0" />
+		</ItemGroup>
+		<ItemGroup>
+			<Compile Update="Properties\Settings.Designer.cs">
+				<DesignTimeSharedInput>True</DesignTimeSharedInput>
+				<AutoGen>True</AutoGen>
+				<DependentUpon>Settings.settings</DependentUpon>
+			</Compile>
+		</ItemGroup>
+		<ItemGroup>
+			<None Update="Properties\Settings.settings">
+				<Generator>SettingsSingleFileGenerator</Generator>
+				<LastGenOutput>Settings.Designer.cs</LastGenOutput>
+			</None>
+		</ItemGroup>
 </Project>
