@@ -373,8 +373,11 @@ namespace PingTool.NET
                 }
             }
 
-            // Display the results after cancellation
-            DisplayResultsAfterCancellation();
+            // Only display the results if the "Run Ping" button was clicked (not after "Reset")
+            if (!buttonRunPing.Enabled)
+            {
+                DisplayResultsAfterCancellation();
+            }
         }
 
         private void resetButton_Click(object sender, EventArgs e)
