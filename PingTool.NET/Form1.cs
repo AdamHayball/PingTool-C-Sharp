@@ -1,6 +1,8 @@
-﻿using System.Net.NetworkInformation;
+﻿using System.Diagnostics;
+using System.Net.NetworkInformation;
 using System.Reflection;
 using System.Text;
+using System.Windows.Forms;
 using System.Windows.Forms.DataVisualization.Charting;
 
 namespace PingTool.NET
@@ -23,12 +25,17 @@ namespace PingTool.NET
         private CheckBox checkBoxSlowPings; // Add the checkBoxSlowPings field
         private CheckBox checkBoxSaveToLogFile; // Add the checkBoxSaveToLogFile field
         private Chart pingChart; // Add the pingChart field
+        private LinkLabel linkLabel;
         private List<Task<string>> pingTasks = new List<Task<string>>(); // Moved pingTasks to class level
-
 
         public Form1()
         {
             InitializeComponent();
+
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
+            this.MinimumSize = new Size(440, 695);
+            this.MaximumSize = new Size(440, 695);
+
             textBoxNumPings.Text = "200"; // Set the default value of the number of pings
 
             // Set version number in the title bar without the revision number
@@ -38,12 +45,6 @@ namespace PingTool.NET
 
             // Set titlebar icon
             this.Icon = Properties.Resources.SPTMulti;
-#if WINDOWS
-            // Initialize and set up the pingChart control
-            pingChart = new Chart();
-            pingChart.Location = new Point(20, this.ClientSize.Height - 210); // Set the chart location at the bottom
-            pingChart.Size = new Size(380, 200); // Set the size of the chart
-            pingChart.ChartAreas.Add("PingChartArea");
 
             // Add the first series for Usable IP with blue color
             AddSeriesToChart("UsableIP", Color.Blue);
@@ -61,12 +62,24 @@ namespace PingTool.NET
             legend.LegendStyle = LegendStyle.Row;
             pingChart.Legends.Add(legend);
             this.Controls.Add(pingChart); // Add the chart control to the form
-#else
-            // Disable the chart on non-Windows platforms
-            // You can add other platform-specific behaviors here if needed.
-#endif
         }
 
+        private void LinkLabel1_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            try
+            {
+                // Use the default web browser to open the URL
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = "https://github.com/AdamHayball/PingTool-C-Sharp",
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"An error occurred: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
         private void DisplayResultsAfterCancellation()
         {
             // Check if any ping task was canceled
@@ -159,6 +172,7 @@ namespace PingTool.NET
             if (!int.TryParse(textBoxNumPings.Text, out int numPings))
             {
                 MessageBox.Show("Please enter a valid number for the number of pings.");
+                buttonRunPing.Enabled = true; // Enable the button again
                 return;
             }
 
@@ -168,80 +182,51 @@ namespace PingTool.NET
             cancellationTokenSource?.Cancel();
             cancellationTokenSource = new CancellationTokenSource();
 
-            // Clear existing ping tasks
-            pingTasks.Clear();
+            // Execute ping tasks concurrently when both IPs are provided
+            bool validUsableIP = !string.IsNullOrEmpty(usableIP);
+            bool validGatewayIP = !string.IsNullOrEmpty(gatewayIP);
 
-            // Add ping tasks for each provided IP address
-            if (!string.IsNullOrEmpty(usableIP))
-            {
-                pingTasks.Add(RunPingAsync(usableIP, numPings, packetSize, cancellationTokenSource.Token, pingChart.Series["UsableIP"]));
-            }
-
-            if (!string.IsNullOrEmpty(gatewayIP))
-            {
-                pingTasks.Add(RunPingAsync(gatewayIP, numPings, packetSize, cancellationTokenSource.Token, pingChart.Series["GatewayIP"]));
-            }
-
-            // Declare the resultBuilder outside the try block
             StringBuilder resultBuilder = new StringBuilder();
 
-            try
+            if (validUsableIP && validGatewayIP)
             {
-                // Execute all ping tasks concurrently
-                await Task.WhenAll(pingTasks);
+                var usableIpTask = RunPingAsync(usableIP, numPings, packetSize, cancellationTokenSource.Token, pingChart.Series["UsableIP"]);
+                var gatewayIpTask = RunPingAsync(gatewayIP, numPings, packetSize, cancellationTokenSource.Token, pingChart.Series["GatewayIP"]);
 
-                // Process the results and update the UI
-                bool validIPProvided = false;
-                int validIpCount = 0; // Variable to track the number of valid IP addresses found
+                await Task.WhenAll(usableIpTask, gatewayIpTask);
 
-                foreach (var task in pingTasks)
-                {
-                    if (!string.IsNullOrEmpty(task.Result))
-                    {
-                        validIPProvided = true;
-                        validIpCount++; // Increment the count for each valid IP address found
-                        string ipType = (task == pingTasks[0]) ? "Usable" : "Gateway";
-                        resultBuilder.AppendLine($"Results for {ipType} IP ({(task == pingTasks[0] ? usableIP : gatewayIP)}):");
-                        resultBuilder.AppendLine(task.Result);
-                        if (validIpCount < pingTasks.Count)
-                        {
-                            // Add separator only if there are more valid IP addresses to display
-                            resultBuilder.AppendLine("=================");
-                        }
-                    }
-                }
-
-                if (validIPProvided && pingTasks.All(task => string.IsNullOrEmpty(task.Result)))
-                {
-                    resultBuilder.AppendLine("Request Timed Out (all pings failed).");
-                }
-
-                if (checkBoxSaveToLogFile.Checked)
-                {
-                    SavePingOutputToLogFile(resultBuilder.ToString());
-                }
-
-                outputTextBox.Text = resultBuilder.ToString();
+                resultBuilder.AppendLine($"Results for Usable IP ({usableIP}):");
+                resultBuilder.AppendLine(usableIpTask.Result);
+                resultBuilder.AppendLine("=================");
+                resultBuilder.AppendLine($"Results for Gateway IP ({gatewayIP}):");
+                resultBuilder.AppendLine(gatewayIpTask.Result);
             }
-            catch (OperationCanceledException)
+            else if (validUsableIP)
             {
-                // Handle the cancellation exception if needed
-                outputTextBox.Text = "Ping canceled by user.";
+                string usableIpResults = await RunPingAsync(usableIP, numPings, packetSize, cancellationTokenSource.Token, pingChart.Series["UsableIP"]);
+                resultBuilder.AppendLine($"Results for Usable IP ({usableIP}):");
+                resultBuilder.AppendLine(usableIpResults);
             }
-            catch (Exception ex)
+            else if (validGatewayIP)
             {
-                // Handle other exceptions that might occur during ping
-                outputTextBox.Text = $"Error occurred during ping: {ex.Message}";
+                string gatewayIpResults = await RunPingAsync(gatewayIP, numPings, packetSize, cancellationTokenSource.Token, pingChart.Series["GatewayIP"]);
+                resultBuilder.AppendLine($"Results for Gateway IP ({gatewayIP}):");
+                resultBuilder.AppendLine(gatewayIpResults);
             }
-            finally
+            else
             {
-                if (!cancellationTokenSource.IsCancellationRequested)
-                {
-                    outputTextBox.Text = resultBuilder.ToString();
-                }
-                // Enable the "Run Ping" button after ping tasks are completed or canceled
-                buttonRunPing.Enabled = true;
+                resultBuilder.AppendLine("No valid IP addresses provided.");
             }
+
+            if (checkBoxSaveToLogFile.Checked)
+            {
+                SavePingOutputToLogFile(resultBuilder.ToString());
+            }
+
+            outputTextBox.Text = resultBuilder.ToString();
+
+            // Enable the "Run Ping" button after ping tasks are completed or canceled
+            buttonRunPing.Enabled = true;
         }
 
         private async Task<string> RunPingAsync(string ipAddress, int numPings, int packetSize, CancellationToken cancellationToken, Series series)
@@ -349,34 +334,13 @@ namespace PingTool.NET
             pingChart.Series["GatewayIP"].Points.Clear();
         }
 
+
         // Add the "Cancel" button click event handler
         private async void cancelButton_Click(object sender, EventArgs e)
         {
-            // Check if there are any ongoing ping tasks
-            if (pingTasks.Any(task => !task.IsCompleted))
+            if (cancellationTokenSource != null)
             {
-                // Cancel the ongoing pings when the cancel button is clicked
-                cancellationTokenSource?.Cancel();
-
-                try
-                {
-                    // Wait for all tasks to complete or be canceled
-                    await Task.WhenAll(pingTasks);
-                }
-                catch (OperationCanceledException)
-                {
-                    // The tasks were canceled, which is expected
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"Error occurred during ping cancellation: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-            }
-
-            // Only display the results if the "Run Ping" button was clicked (not after "Reset")
-            if (!buttonRunPing.Enabled)
-            {
-                DisplayResultsAfterCancellation();
+                cancellationTokenSource.Cancel();
             }
         }
 
@@ -403,10 +367,10 @@ namespace PingTool.NET
                 MessageBox.Show($"Error saving to log file: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-        // No changes made to the Form1_Load event handler, so it remains as is
 
         private void InitializeComponent()
         {
+            ChartArea chartArea1 = new ChartArea();
             pingChart = new Chart();
             textBoxUsableIP = new TextBox();
             textBoxGatewayIP = new TextBox();
@@ -420,44 +384,40 @@ namespace PingTool.NET
             buttonCancel = new Button();
             checkBoxSlowPings = new CheckBox();
             checkBoxSaveToLogFile = new CheckBox();
+            textBoxPacketSize = new TextBox();
+            labelPacketSize = new Label();
+            linkLabel = new LinkLabel();
+            ((System.ComponentModel.ISupportInitialize)pingChart).BeginInit();
             SuspendLayout();
+            // 
+            // pingChart
+            // 
+            chartArea1.Name = "PingChartArea";
+            pingChart.ChartAreas.Add(chartArea1);
+            pingChart.Location = new Point(12, 400);
+            pingChart.Name = "pingChart";
+            pingChart.Size = new Size(400, 245);
+            pingChart.TabIndex = 0;
             // 
             // textBoxUsableIP
             // 
-            textBoxUsableIP.Location = new Point(233, 10);
+            textBoxUsableIP.Location = new Point(125, 7);
             textBoxUsableIP.Margin = new Padding(4, 3, 4, 3);
             textBoxUsableIP.Name = "textBoxUsableIP";
-            textBoxUsableIP.Size = new Size(174, 23);
+            textBoxUsableIP.Size = new Size(287, 23);
             textBoxUsableIP.TabIndex = 0;
             // 
             // textBoxGatewayIP
             // 
-            textBoxGatewayIP.Location = new Point(233, 40);
+            textBoxGatewayIP.Location = new Point(125, 37);
             textBoxGatewayIP.Margin = new Padding(4, 3, 4, 3);
             textBoxGatewayIP.Name = "textBoxGatewayIP";
-            textBoxGatewayIP.Size = new Size(174, 23);
+            textBoxGatewayIP.Size = new Size(287, 23);
             textBoxGatewayIP.TabIndex = 1;
-            // 
-            // textBoxNumPings
-            // 
-            textBoxNumPings.Location = new Point(233, 70);
-            textBoxNumPings.Margin = new Padding(4, 3, 4, 3);
-            textBoxNumPings.Name = "textBoxNumPings";
-            textBoxNumPings.Size = new Size(174, 23);
-            textBoxNumPings.TabIndex = 5;
-            //
-            // textBoxPacketSize
-            //
-            textBoxPacketSize = new TextBox();
-            textBoxPacketSize.Location = new Point(233, 100); // Adjust the location to align with other TextBox controls
-            textBoxPacketSize.Size = new Size(174, 23);
-            textBoxPacketSize.TabIndex = 11;
-            textBoxPacketSize.Text = "32"; // Set the default packet size
-            this.Controls.Add(textBoxPacketSize);
             // 
             // buttonRunPing
             // 
-            buttonRunPing.Location = new Point(12, 208);
+            buttonRunPing.Location = new Point(13, 163);
             buttonRunPing.Margin = new Padding(4, 3, 4, 3);
             buttonRunPing.Name = "buttonRunPing";
             buttonRunPing.Size = new Size(117, 35);
@@ -468,7 +428,7 @@ namespace PingTool.NET
             // 
             // buttonReset
             // 
-            buttonReset.Location = new Point(140, 208);
+            buttonReset.Location = new Point(155, 163);
             buttonReset.Margin = new Padding(4, 3, 4, 3);
             buttonReset.Name = "buttonReset";
             buttonReset.Size = new Size(117, 35);
@@ -479,12 +439,12 @@ namespace PingTool.NET
             // 
             // outputTextBox
             // 
-            outputTextBox.Location = new Point(12, 254);
+            outputTextBox.Location = new Point(12, 204);
             outputTextBox.Margin = new Padding(4, 3, 4, 3);
             outputTextBox.Multiline = true;
             outputTextBox.Name = "outputTextBox";
             outputTextBox.ScrollBars = ScrollBars.Vertical;
-            outputTextBox.Size = new Size(395, 184);
+            outputTextBox.Size = new Size(400, 184);
             outputTextBox.TabIndex = 4;
             // 
             // labelUsableIP
@@ -516,18 +476,18 @@ namespace PingTool.NET
             labelNumPings.Size = new Size(100, 15);
             labelNumPings.TabIndex = 4;
             labelNumPings.Text = "Number of Pings:";
-            //
-            // Initialize labelPacketSize
-            //
-            labelPacketSize = new Label();
-            labelPacketSize.Location = new Point(12, 100);
-            labelPacketSize.AutoSize = true;
-            labelPacketSize.Text = "Packet Size (bytes):";
-            this.Controls.Add(labelPacketSize);
+            // 
+            // textBoxNumPings
+            // 
+            textBoxNumPings.Location = new Point(125, 67);
+            textBoxNumPings.Margin = new Padding(4, 3, 4, 3);
+            textBoxNumPings.Name = "textBoxNumPings";
+            textBoxNumPings.Size = new Size(40, 23);
+            textBoxNumPings.TabIndex = 5;
             // 
             // buttonCancel
             // 
-            buttonCancel.Location = new Point(268, 208);
+            buttonCancel.Location = new Point(295, 163);
             buttonCancel.Margin = new Padding(4, 3, 4, 3);
             buttonCancel.Name = "buttonCancel";
             buttonCancel.Size = new Size(117, 35);
@@ -539,7 +499,7 @@ namespace PingTool.NET
             // checkBoxSlowPings
             // 
             checkBoxSlowPings.AutoSize = true;
-            checkBoxSlowPings.Location = new Point(12, 162);
+            checkBoxSlowPings.Location = new Point(13, 138);
             checkBoxSlowPings.Margin = new Padding(4, 3, 4, 3);
             checkBoxSlowPings.Name = "checkBoxSlowPings";
             checkBoxSlowPings.Size = new Size(83, 19);
@@ -550,13 +510,41 @@ namespace PingTool.NET
             // checkBoxSaveToLogFile
             // 
             checkBoxSaveToLogFile.AutoSize = true;
-            checkBoxSaveToLogFile.Location = new Point(117, 162);
+            checkBoxSaveToLogFile.Location = new Point(116, 138);
             checkBoxSaveToLogFile.Margin = new Padding(4, 3, 4, 3);
             checkBoxSaveToLogFile.Name = "checkBoxSaveToLogFile";
             checkBoxSaveToLogFile.Size = new Size(46, 19);
             checkBoxSaveToLogFile.TabIndex = 8;
             checkBoxSaveToLogFile.Text = "Log";
             checkBoxSaveToLogFile.UseVisualStyleBackColor = true;
+            // 
+            // textBoxPacketSize
+            // 
+            textBoxPacketSize.Location = new Point(125, 97);
+            textBoxPacketSize.Name = "textBoxPacketSize";
+            textBoxPacketSize.Size = new Size(40, 23);
+            textBoxPacketSize.TabIndex = 11;
+            textBoxPacketSize.Text = "32";
+            // 
+            // labelPacketSize
+            // 
+            labelPacketSize.AutoSize = true;
+            labelPacketSize.Location = new Point(12, 100);
+            labelPacketSize.Name = "labelPacketSize";
+            labelPacketSize.Size = new Size(107, 15);
+            labelPacketSize.TabIndex = 12;
+            labelPacketSize.Text = "Packet Size (bytes):";
+            // 
+            // linkLabel
+            // 
+            linkLabel.AutoSize = true;
+            linkLabel.Location = new Point(225, 138);
+            linkLabel.Name = "linkLabel";
+            linkLabel.Size = new Size(185, 15);
+            linkLabel.TabIndex = 13;
+            linkLabel.TabStop = true;
+            linkLabel.Text = "Like it? Donate to the coffee fund!";
+            linkLabel.LinkClicked += LinkLabel1_LinkClicked;
             // 
             // Form1
             // 
@@ -576,10 +564,12 @@ namespace PingTool.NET
             Controls.Add(labelUsableIP);
             Controls.Add(labelNumPings);
             Controls.Add(labelPacketSize);
+            Controls.Add(linkLabel);
             Controls.Add(textBoxNumPings);
             Margin = new Padding(4, 3, 4, 3);
             Name = "Form1";
             Text = "Ping Tool";
+            ((System.ComponentModel.ISupportInitialize)pingChart).EndInit();
             ResumeLayout(false);
             PerformLayout();
         }
