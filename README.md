@@ -1,62 +1,81 @@
-# PingTool-C-Sharp
-Simple Ping Tool in C#
+<h1>Simple Ping Tool in C#</h1>
+    
+    <p>This project serves as an experiment, designed to gauge the complexity and proficiency of ChatGPT-3.5's Free Research Preview in creating programs. Initially, the idea was to have the model generate a basic script that would perform concurrent pinging of two IP addresses, executing this task 200 times using the native Windows ping tool in the command line.</p>
 
-This is an experimental project to see how complex and how well the Free Research Preview of ChatGPT-3.5 can create a program. The original Idea was to have it write a simple script file that takes two IP addresses and pings them concurrently 200 times with the windows native ping tool in command line.
+    <p>The current version represents a continuation of the effort, building upon the initial attempt using a powershell script. Now, the project is evolving to leverage the C# .NET framework and Visual Studio Community Edition, guided by the insights from ChatGPT.</p>
 
-This version is a continuation of the powershell script attempt utilizing C# .NET framework and Visual Studio Community Edition as suggested by ChatGPT.
+    <p>Throughout this pursuit of a ChatGPT-generated application, certain insights have emerged. OpenAI deliberately enforces limits on response length, affecting the overall capacity for code revision. When presented with a substantial project, ChatGPT may decline, essentially communicating that the task is extensive and beyond its capability. However, when provided with smaller, individual tasks, its success rate tends to be higher. This limitation can be likened to expecting a single programmer to complete an entire project within a mere 30 seconds.</p>
 
-In continuing the pursuit of a ChatGPT generated application some things have become clear. OpenAI is intentionally limiting response length and thus overall bandwidth of code revision. If given a large scope project ChatGPT will flat out refuse, basically saying that's alot of work and I can't do that. If given small tasks individually it usually has a high rate of success. I blame the bandwidth limitation for this but also liken it to if I told a single programmer they have 30 seconds to complete an entire project. 
-"Prompt" clarity is vital in achieving the desired results. When an error is encountered in the build all error can be resolved by ChatGPT if given the error and/or resending all of the modified code for review. ChatGPT can at times be ambiguous about where the code revision snippet is supposed to be. To fix this you simply need to send it the full code and request it send you the full updated code back instead of just a snippet. So far ChatGPT has performed as well or better than if a program was being developed by a human outsourcing solution like Fiverr.
+    <p>The clarity of the initial "prompt" significantly influences the achievement of desired outcomes. In cases where build errors arise, ChatGPT can resolve these issues when provided with the error details and the modified code for review. Occasionally, ChatGPT may be ambiguous regarding the appropriate location for inserting a code revision snippet. To address this, it's recommended to share the entire code and request a complete updated version in response, rather than just a snippet. So far, ChatGPT has demonstrated performance on par with, or even surpassing, human outsourcing solutions like Fiverr when it comes to program development.</p>
 
-Charting legend required human intervention to tell ChatGPT there was a conflict in the code and where.
-At this point in development ChatGPT is acting as more of a helper than a coder.
+    <p>In some instances, human intervention was necessary to help ChatGPT identify conflicts within the code and their resolutions. In the current stage of development, ChatGPT plays more of a supportive role than that of the primary coder.</p>
 
-Revisions become problematic as ChatGPT will ignore existing solutions in longer projects and deploy conflicting code. Resulting in redundancy problems that need to be corrected by human intervention.
+    <p>Revisions can prove challenging, as ChatGPT may disregard existing solutions in longer projects and introduce conflicting code, leading to redundancy issues that require human intervention to correct.</p>
 
-Trying to patch in major functionality changes results in ChatGpt flailing around not understanding why it can't just add some methods and have it work.
+    <p>When attempting to introduce significant functional changes, ChatGPT may struggle to understand why it can't seamlessly add new methods and achieve the desired functionality.</p>
 
-=============================
+    <p>While endeavoring to incorporate IPV6 support, it became evident that a comprehensive code overhaul, along with the integration of new libraries and extensive debugging, would be necessary.</p>
 
-v1.3.0<br></br>
--Added graph IP legend<br></br>
--Made graph results line thicker<br></br>
--Fixed pushing "Run Ping" button twice crashes app<br></br>
--Added set packet size option<br></br>
--Cleaned up .csproj file post .NET upgrade<br></br>
--Titlebar version no longer static<br></br>
--Improved UI spacing<br></br>
+    <p>The outcomes generated by ChatGPT can appear inconsistent, as its style and approach may vary frequently. Utilizing a new chat session can yield either positive or negative results, depending on the logical state of the language model at that moment.</p>
 
-=============================
+    <p>Barring any major bugs or feature changes, the development of this program is nearing completion, as the program is now fully functional and in regular use.</p>
 
-v1.2.0 Change Log:<br></br>
+    <p>By the way, I had ChatGPT revise the README – quite amusing! XD</p>
 
-**New System Requirements**<br></br>
-Windows 7 or higher<br></br>
-Dual core or better CPU<br></br>
-.NET upgrade 4.7.2 > 6.0<br></br>
-<br></br>
--Added slow/monitor mode<br></br>
--Added cancel button<br></br>
--Added charting graph<br></br>
--Added output logging<br></br>
--Fixed IPs not pinging concurrently<br></br>
+    <h2>Version 1.3.2</h2>
+    <ul>
+        <li>Added GitHub Link</li>
+        <li>Enhanced UI Spacing</li>
+        <li>Removed Window Resizing</li>
+        <li>Fixed bug preventing single IP results when pinging the gateway only</li>
+    </ul>
+    <p><strong>Known Issue:</strong> Pressing reset while pinging does not cancel and clear results; it only resets the chart.</p>
 
-=============================
+    <h2>Version 1.3.1</h2>
+    <ul>
+        <li>Fixed: Pressing the cancel button after reset displays previous results</li>
+    </ul>
 
-v1.1.1 Change Log:<br></br>
--Added icon generated by Bing/Create Powered by Dall-E using prompt "icon for ping tool"<br></br>
--Included both single and multi image .ICO of AI generated icon files in resources<br></br>
--Changed Assembly name to remove ".NET" from compiled .EXE<br></br>
+    <h2>Version 1.3.0</h2>
+    <ul>
+        <li>Added graph IP legend</li>
+        <li>Increased thickness of graph result lines</li>
+        <li>Fixed issue of app crashing when "Run Ping" button is pressed twice</li>
+        <li>Introduced set packet size option</li>
+        <li>Streamlined .csproj file post .NET upgrade</li>
+        <li>Titlebar version is no longer static</li>
+        <li>Improved UI spacing</li>
+    </ul>
 
-=============================
+    <h2>Version 1.2.0 Change Log:</h2>
+    <p><strong>New System Requirements:</strong></p>
+    <ul>
+        <li>Windows 7 or higher</li>
+        <li>Dual-core or better CPU</li>
+        <li>.NET upgrade from 4.7.2 to 6.0</li>
+    </ul>
+    <ul>
+        <li>Added slow/monitor mode</li>
+        <li>Added cancel button</li>
+        <li>Added charting graph</li>
+        <li>Introduced output logging</li>
+        <li>Fixed IPs not pinging concurrently</li>
+    </ul>
 
-v1.1.0 Change Log:<br></br>
--Fixed Does not display Please wait until after results<br></br>
--Fixed App not responding during pings<br></br>
--Add number of pings field with default value of 200<br></br>
--Fixed GUI spacing for new ping field<br></br>
--Fixed "results message" showing before actual results<br></br>
--Added version number to title<br></br>
--Currently in flood mode for fastest results and testing<br></br>
+    <h2>Version 1.1.1 Change Log:</h2>
+    <ul>
+        <li>Added icon generated by Bing/Create Powered by Dall-E using prompt "icon for ping tool"</li>
+        <li>Included both single and multi-image .ICO of AI-generated icon files in resources</li>
+        <li>Changed Assembly name to remove ".NET" from compiled .EXE</li>
+    </ul>
 
-
+    <h2>Version 1.1.0 Change Log:</h2>
+    <ul>
+        <li>Fixed: Does not display "Please wait" until after results</li>
+        <li>Fixed: App not responding during pings</li>
+        <li>Added number of pings field with a default value of 200</li>
+        <li>Fixed GUI spacing for the new ping field</li>
+        <li>Fixed "results message" showing before actual results</li>
+        <li>Added version number to the title</li>
+        <li>Currently in flood mode for fastest results and testing</li>
+    </ul>
