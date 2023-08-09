@@ -17,6 +17,11 @@ Trying to patch in major functionality changes results in ChatGpt flailing aroun
 
 =============================
 
+v1.3.1<br></br>
+Fixed - Pressing the cancel button after reset displays previous results<br></br>
+
+=============================
+
 v1.3.0<br></br>
 -Added graph IP legend<br></br>
 -Made graph results line thicker<br></br>
