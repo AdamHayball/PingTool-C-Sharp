@@ -24,7 +24,7 @@ Barring any major bugs or feature changes, the development of this program is ne
 By the way, I had ChatGPT revise the README – quite amusing! XD
 
 ## Version 1.3.3
-- Addressed the issue where pressing the "Reset" button during ongoing pinging would not properly cancel tasks and clear results. Now, the "Reset" button effectively cancels ongoing pinging tasks, clears displayed results, and resets the chart display.
+- Fixed an issue where pressing the "Reset" button during ongoing pinging would not properly cancel tasks and clear results. Now, the "Reset" button effectively cancels ongoing pinging tasks, clears displayed results, and resets the chart display.
 
 This release marks the introduction of the first Release Candidate (RC). In this RC, the focus has been on enhancing the user experience and ensuring smooth functionality. To make the application as portable and lightweight as possible, a compiled binary of the application, along with its associated dependencies, will be provided in a compressed file format. This approach enables users to conveniently utilize the tool across various platforms without the need for extensive installation procedures.
 
@@ -37,7 +37,7 @@ This release marks the introduction of the first Release Candidate (RC). In this
 **Known Issue:** Pressing reset while pinging does not cancel and clear results; it only resets the chart.
 
 ## Version 1.3.1
-- Fixed: Pressing the cancel button after reset displays previous results
+- Fixed Pressing the cancel button after reset displays previous results
 
 ## Version 1.3.0
 - Added graph IP legend
