@@ -346,10 +346,19 @@ namespace PingTool.NET
 
         private void resetButton_Click(object sender, EventArgs e)
         {
+            // Cancel ongoing ping tasks if they exist
+            if (cancellationTokenSource != null)
+            {
+                cancellationTokenSource.Cancel();
+            }
+
+            // Clear the text boxes and output
             textBoxUsableIP.Text = "";
             textBoxGatewayIP.Text = "";
             outputTextBox.Text = "";
-            ClearPingChart(); // Clear the graph series data points
+
+            // Clear the graph series data points
+            ClearPingChart();
         }
 
         private void SavePingOutputToLogFile(string pingResults)
