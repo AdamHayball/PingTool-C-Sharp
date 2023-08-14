@@ -26,6 +26,27 @@ namespace PingTool.NET
         private CheckBox checkBoxSaveToLogFile; // Add the checkBoxSaveToLogFile field
         private Chart pingChart; // Add the pingChart field
         private LinkLabel linkLabel;
+        private TabControl tabControl1;
+        private TabPage tabPage1;
+        private TabPage tabPage2;
+        private CheckBox checkBoxLTE;
+        private CheckBox checkBox4G;
+        private CheckBox checkBox3G;
+        private TextBox ssOutputTextbox;
+        private TextBox SINRtextBox;
+        private TextBox RSRPtextBox;
+        private TextBox RSRQtextBox;
+        private Label label5;
+        private Label label4;
+        private Label label3;
+        private Label label2;
+        private Label label1;
+        private TextBox CINRtextBox;
+        private Button runViaButton;
+        private TextBox RSSItextBox;
+        private TextBox SigStrTextBox;
+        private Label label6;
+        private Button resetViaButton;
         private List<Task<string>> pingTasks = new List<Task<string>>(); // Moved pingTasks to class level
 
         public Form1()
@@ -33,8 +54,8 @@ namespace PingTool.NET
             InitializeComponent();
 
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
-            this.MinimumSize = new Size(440, 695);
-            this.MaximumSize = new Size(440, 695);
+            this.MinimumSize = new Size(444, 684);
+            this.MaximumSize = new Size(444, 684);
 
             textBoxNumPings.Text = "200"; // Set the default value of the number of pings
 
@@ -52,16 +73,9 @@ namespace PingTool.NET
             // Add the second series for Gateway IP with green color
             AddSeriesToChart("GatewayIP", Color.Green);
 
-            pingChart.ChartAreas["PingChartArea"].AxisX.Title = "Ping Number";
-            pingChart.ChartAreas["PingChartArea"].AxisY.Title = "Response Time (ms)";
+            runViaButton.Click += RunViability_Click;
 
-            // Add the color legend at the bottom of the chart
-            var legend = new Legend("Legend");
-            legend.Docking = Docking.Bottom;
-            legend.Alignment = StringAlignment.Center;
-            legend.LegendStyle = LegendStyle.Row;
-            pingChart.Legends.Add(legend);
-            this.Controls.Add(pingChart); // Add the chart control to the form
+
         }
 
         private void LinkLabel1_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
@@ -377,9 +391,201 @@ namespace PingTool.NET
             }
         }
 
+        private void RunViability_Click(object sender, EventArgs e)
+        {
+            if (double.TryParse(SigStrTextBox.Text, out double signalStrength) &&
+                double.TryParse(RSSItextBox.Text, out double rssi) &&
+                double.TryParse(RSRPtextBox.Text, out double rsrp) &&
+                double.TryParse(RSRQtextBox.Text, out double rsrq))
+            {
+                string signalStrengthResult = GetSignalStrengthResult(signalStrength);
+                string rssiResult = GetRssiResult(rssi);
+                string rsrpResult = GetRsrpResult(rsrp);
+                string rsrqResult = GetRsrqResult(rsrq);
+
+                string sinrResult = "";
+                string cinrResult = "";
+
+                if (!checkBox3G.Checked)
+                {
+                    if (!checkBox4G.Checked)
+                    {
+                        double sinrValue;
+                        if (double.TryParse(SINRtextBox.Text, out sinrValue))
+                        {
+                            sinrResult = $"{sinrValue} dB {GetSinrResult(sinrValue)}";
+                        }
+                    }
+
+                    if (!checkBoxLTE.Checked)
+                    {
+                        double cinrValue;
+                        if (double.TryParse(CINRtextBox.Text, out cinrValue))
+                        {
+                            cinrResult = $"{cinrValue} dB {GetCinrResult(cinrValue)}";
+                        }
+                    }
+                }
+
+                string technologyText = "Type: ";
+                if (checkBox3G.Checked) technologyText += "3G, ";
+                if (checkBox4G.Checked) technologyText += "4G, ";
+                if (checkBoxLTE.Checked) technologyText += "LTE, ";
+                technologyText = technologyText.TrimEnd(',', ' ');
+
+                string output = $"{technologyText}{Environment.NewLine}" +
+                                $"Signal Strength: {signalStrength}% {signalStrengthResult}{Environment.NewLine}" +
+                                $"RSSI: {rssi} dBm {rssiResult}{Environment.NewLine}" +
+                                $"RSRP: {rsrp} dBm {rsrpResult}{Environment.NewLine}" +
+                                $"RSRQ: {rsrq} dB {rsrqResult}";
+
+                if (!string.IsNullOrEmpty(sinrResult) && sinrResult != "N/A")
+                {
+                    output += $"{Environment.NewLine}SINR: {sinrResult}";
+                }
+
+                if (!string.IsNullOrEmpty(cinrResult) && cinrResult != "N/A")
+                {
+                    output += $"{Environment.NewLine}CINR: {cinrResult}";
+                }
+
+                ssOutputTextbox.Text = output;
+            }
+            else
+            {
+                ssOutputTextbox.Text = "Invalid input. Please enter numeric values.";
+            }
+        }
+
+        private void CheckBox3G_CheckedChanged(object sender, EventArgs e)
+        {
+            if (checkBox3G.Checked)
+            {
+                checkBox4G.Enabled = false;
+                checkBoxLTE.Enabled = false;
+                SINRtextBox.Enabled = false;
+                CINRtextBox.Enabled = false;
+            }
+            else
+            {
+                checkBox4G.Enabled = true;
+                checkBoxLTE.Enabled = true;
+                SINRtextBox.Enabled = true;
+                CINRtextBox.Enabled = true;
+            }
+        }
+
+        private void CheckBox4G_CheckedChanged(object sender, EventArgs e)
+        {
+            if (checkBox4G.Checked)
+            {
+                checkBox3G.Enabled = false;
+                checkBoxLTE.Enabled = false;
+                SINRtextBox.Enabled = false;
+                CINRtextBox.Enabled = true;
+            }
+            else
+            {
+                checkBox3G.Enabled = true;
+                checkBoxLTE.Enabled = true;
+                SINRtextBox.Enabled = true;
+            }
+        }
+
+        private void CheckBoxLTE_CheckedChanged(object sender, EventArgs e)
+        {
+            if (checkBoxLTE.Checked)
+            {
+                checkBox3G.Enabled = false;
+                checkBox4G.Enabled = false;
+                SINRtextBox.Enabled = true;
+                CINRtextBox.Enabled = false;
+            }
+            else
+            {
+                checkBox3G.Enabled = true;
+                checkBox4G.Enabled = true;
+                CINRtextBox.Enabled = true;
+            }
+        }
+
+        private string GetSignalStrengthResult(double value)
+        {
+            if (value >= 0 && value <= 25) return "Unacceptable";
+            if (value >= 26 && value <= 50) return "Borderline";
+            if (value >= 51 && value <= 75) return "Good";
+            if (value >= 76 && value <= 100) return "Excellent";
+            return "Invalid value";
+        }
+
+        private string GetRssiResult(double value)
+        {
+            if (value >= -100 && value <= -90) return "Unacceptable";
+            if (value >= -89 && value <= -80) return "Borderline";
+            if (value >= -79 && value <= -60) return "Good";
+            if (value >= -59 && value <= -1) return "Excellent";
+            return "Invalid value";
+        }
+
+        private string GetRsrpResult(double value)
+        {
+            if (value <= -100) return "Cell Edge";
+            if (value >= -90 && value <= -100) return "Mid Cell";
+            if (value >= -80 && value <= -89) return "Good";
+            if (value >= -80) return "Excellent";
+            return "Invalid value";
+        }
+
+        private string GetRsrqResult(double value)
+        {
+            if (value < -20) return "Cell Edge";
+            if (value >= -15 && value <= -19) return "Mid Cell";
+            if (value >= -10 && value <= -14) return "Good";
+            if (value >= -10) return "Excellent";
+            return "Invalid value";
+        }
+
+        private string GetSinrResult(double value)
+        {
+            if (value < 5) return "Unstable";
+            if (value >= 6 && value <= 9) return "Signal Dependent";
+            if (value >= 10 && value <= 14) return "Good";
+            if (value >= 15) return "Excellent";
+            return "Invalid value";
+        }
+
+        private string GetCinrResult(double value)
+        {
+            if (value < 5) return "Unstable";
+            if (value >= 6 && value <= 9) return "Signal Dependent";
+            if (value >= 10 && value <= 14) return "Good";
+            if (value >= 15) return "Excellent";
+            return "Invalid value";
+        }
+
+        private void resetViaButton_Click(object sender, EventArgs e)
+        {
+            // Reset checkboxes
+            checkBox3G.Checked = false;
+            checkBox4G.Checked = false;
+            checkBoxLTE.Checked = false;
+
+            // Clear textboxes
+            SigStrTextBox.Clear();
+            RSSItextBox.Clear();
+            RSRPtextBox.Clear();
+            RSRQtextBox.Clear();
+            SINRtextBox.Clear();
+            CINRtextBox.Clear();
+
+            // Clear output
+            ssOutputTextbox.Clear();
+        }
+
         private void InitializeComponent()
         {
             ChartArea chartArea1 = new ChartArea();
+            Legend legend1 = new Legend();
             pingChart = new Chart();
             textBoxUsableIP = new TextBox();
             textBoxGatewayIP = new TextBox();
@@ -396,21 +602,50 @@ namespace PingTool.NET
             textBoxPacketSize = new TextBox();
             labelPacketSize = new Label();
             linkLabel = new LinkLabel();
+            tabControl1 = new TabControl();
+            tabPage1 = new TabPage();
+            tabPage2 = new TabPage();
+            resetViaButton = new Button();
+            SigStrTextBox = new TextBox();
+            label6 = new Label();
+            label5 = new Label();
+            label4 = new Label();
+            label3 = new Label();
+            label2 = new Label();
+            label1 = new Label();
+            CINRtextBox = new TextBox();
+            runViaButton = new Button();
+            RSSItextBox = new TextBox();
+            ssOutputTextbox = new TextBox();
+            SINRtextBox = new TextBox();
+            RSRPtextBox = new TextBox();
+            RSRQtextBox = new TextBox();
+            checkBoxLTE = new CheckBox();
+            checkBox4G = new CheckBox();
+            checkBox3G = new CheckBox();
             ((System.ComponentModel.ISupportInitialize)pingChart).BeginInit();
+            tabControl1.SuspendLayout();
+            tabPage1.SuspendLayout();
+            tabPage2.SuspendLayout();
             SuspendLayout();
             // 
             // pingChart
             // 
             chartArea1.Name = "PingChartArea";
             pingChart.ChartAreas.Add(chartArea1);
-            pingChart.Location = new Point(12, 400);
+            legend1.Alignment = StringAlignment.Center;
+            legend1.Docking = Docking.Bottom;
+            legend1.LegendStyle = LegendStyle.Row;
+            legend1.Name = "Legend";
+            pingChart.Legends.Add(legend1);
+            pingChart.Location = new Point(10, 367);
             pingChart.Name = "pingChart";
             pingChart.Size = new Size(400, 245);
             pingChart.TabIndex = 0;
             // 
             // textBoxUsableIP
             // 
-            textBoxUsableIP.Location = new Point(125, 7);
+            textBoxUsableIP.Location = new Point(121, 19);
             textBoxUsableIP.Margin = new Padding(4, 3, 4, 3);
             textBoxUsableIP.Name = "textBoxUsableIP";
             textBoxUsableIP.Size = new Size(287, 23);
@@ -418,7 +653,7 @@ namespace PingTool.NET
             // 
             // textBoxGatewayIP
             // 
-            textBoxGatewayIP.Location = new Point(125, 37);
+            textBoxGatewayIP.Location = new Point(122, 48);
             textBoxGatewayIP.Margin = new Padding(4, 3, 4, 3);
             textBoxGatewayIP.Name = "textBoxGatewayIP";
             textBoxGatewayIP.Size = new Size(287, 23);
@@ -426,7 +661,7 @@ namespace PingTool.NET
             // 
             // buttonRunPing
             // 
-            buttonRunPing.Location = new Point(13, 163);
+            buttonRunPing.Location = new Point(10, 137);
             buttonRunPing.Margin = new Padding(4, 3, 4, 3);
             buttonRunPing.Name = "buttonRunPing";
             buttonRunPing.Size = new Size(117, 35);
@@ -437,7 +672,7 @@ namespace PingTool.NET
             // 
             // buttonReset
             // 
-            buttonReset.Location = new Point(155, 163);
+            buttonReset.Location = new Point(152, 137);
             buttonReset.Margin = new Padding(4, 3, 4, 3);
             buttonReset.Name = "buttonReset";
             buttonReset.Size = new Size(117, 35);
@@ -448,7 +683,7 @@ namespace PingTool.NET
             // 
             // outputTextBox
             // 
-            outputTextBox.Location = new Point(12, 204);
+            outputTextBox.Location = new Point(9, 178);
             outputTextBox.Margin = new Padding(4, 3, 4, 3);
             outputTextBox.Multiline = true;
             outputTextBox.Name = "outputTextBox";
@@ -459,7 +694,7 @@ namespace PingTool.NET
             // labelUsableIP
             // 
             labelUsableIP.AutoSize = true;
-            labelUsableIP.Location = new Point(12, 10);
+            labelUsableIP.Location = new Point(10, 22);
             labelUsableIP.Margin = new Padding(4, 0, 4, 0);
             labelUsableIP.Name = "labelUsableIP";
             labelUsableIP.Size = new Size(58, 15);
@@ -469,7 +704,7 @@ namespace PingTool.NET
             // labelGatewayIP
             // 
             labelGatewayIP.AutoSize = true;
-            labelGatewayIP.Location = new Point(12, 40);
+            labelGatewayIP.Location = new Point(10, 51);
             labelGatewayIP.Margin = new Padding(4, 0, 4, 0);
             labelGatewayIP.Name = "labelGatewayIP";
             labelGatewayIP.Size = new Size(68, 15);
@@ -479,7 +714,7 @@ namespace PingTool.NET
             // labelNumPings
             // 
             labelNumPings.AutoSize = true;
-            labelNumPings.Location = new Point(12, 70);
+            labelNumPings.Location = new Point(9, 80);
             labelNumPings.Margin = new Padding(4, 0, 4, 0);
             labelNumPings.Name = "labelNumPings";
             labelNumPings.Size = new Size(100, 15);
@@ -488,7 +723,7 @@ namespace PingTool.NET
             // 
             // textBoxNumPings
             // 
-            textBoxNumPings.Location = new Point(125, 67);
+            textBoxNumPings.Location = new Point(122, 77);
             textBoxNumPings.Margin = new Padding(4, 3, 4, 3);
             textBoxNumPings.Name = "textBoxNumPings";
             textBoxNumPings.Size = new Size(40, 23);
@@ -496,7 +731,7 @@ namespace PingTool.NET
             // 
             // buttonCancel
             // 
-            buttonCancel.Location = new Point(295, 163);
+            buttonCancel.Location = new Point(292, 137);
             buttonCancel.Margin = new Padding(4, 3, 4, 3);
             buttonCancel.Name = "buttonCancel";
             buttonCancel.Size = new Size(117, 35);
@@ -508,7 +743,7 @@ namespace PingTool.NET
             // checkBoxSlowPings
             // 
             checkBoxSlowPings.AutoSize = true;
-            checkBoxSlowPings.Location = new Point(13, 138);
+            checkBoxSlowPings.Location = new Point(170, 79);
             checkBoxSlowPings.Margin = new Padding(4, 3, 4, 3);
             checkBoxSlowPings.Name = "checkBoxSlowPings";
             checkBoxSlowPings.Size = new Size(83, 19);
@@ -519,7 +754,7 @@ namespace PingTool.NET
             // checkBoxSaveToLogFile
             // 
             checkBoxSaveToLogFile.AutoSize = true;
-            checkBoxSaveToLogFile.Location = new Point(116, 138);
+            checkBoxSaveToLogFile.Location = new Point(261, 77);
             checkBoxSaveToLogFile.Margin = new Padding(4, 3, 4, 3);
             checkBoxSaveToLogFile.Name = "checkBoxSaveToLogFile";
             checkBoxSaveToLogFile.Size = new Size(46, 19);
@@ -529,7 +764,7 @@ namespace PingTool.NET
             // 
             // textBoxPacketSize
             // 
-            textBoxPacketSize.Location = new Point(125, 97);
+            textBoxPacketSize.Location = new Point(122, 104);
             textBoxPacketSize.Name = "textBoxPacketSize";
             textBoxPacketSize.Size = new Size(40, 23);
             textBoxPacketSize.TabIndex = 11;
@@ -538,7 +773,7 @@ namespace PingTool.NET
             // labelPacketSize
             // 
             labelPacketSize.AutoSize = true;
-            labelPacketSize.Location = new Point(12, 100);
+            labelPacketSize.Location = new Point(9, 112);
             labelPacketSize.Name = "labelPacketSize";
             labelPacketSize.Size = new Size(107, 15);
             labelPacketSize.TabIndex = 12;
@@ -547,40 +782,255 @@ namespace PingTool.NET
             // linkLabel
             // 
             linkLabel.AutoSize = true;
-            linkLabel.Location = new Point(225, 138);
+            linkLabel.Location = new Point(314, 78);
             linkLabel.Name = "linkLabel";
-            linkLabel.Size = new Size(185, 15);
+            linkLabel.Size = new Size(96, 15);
             linkLabel.TabIndex = 13;
             linkLabel.TabStop = true;
-            linkLabel.Text = "Like it? Donate to the coffee fund!";
+            linkLabel.Text = "Buy Me A Coffee";
             linkLabel.LinkClicked += LinkLabel1_LinkClicked;
+            // 
+            // tabControl1
+            // 
+            tabControl1.Controls.Add(tabPage1);
+            tabControl1.Controls.Add(tabPage2);
+            tabControl1.Location = new Point(1, 0);
+            tabControl1.Name = "tabControl1";
+            tabControl1.SelectedIndex = 0;
+            tabControl1.Size = new Size(426, 648);
+            tabControl1.TabIndex = 1;
+            // 
+            // tabPage1
+            // 
+            tabPage1.Controls.Add(pingChart);
+            tabPage1.Controls.Add(textBoxUsableIP);
+            tabPage1.Controls.Add(buttonCancel);
+            tabPage1.Controls.Add(textBoxNumPings);
+            tabPage1.Controls.Add(checkBoxSlowPings);
+            tabPage1.Controls.Add(linkLabel);
+            tabPage1.Controls.Add(checkBoxSaveToLogFile);
+            tabPage1.Controls.Add(labelPacketSize);
+            tabPage1.Controls.Add(outputTextBox);
+            tabPage1.Controls.Add(labelNumPings);
+            tabPage1.Controls.Add(buttonReset);
+            tabPage1.Controls.Add(labelUsableIP);
+            tabPage1.Controls.Add(buttonRunPing);
+            tabPage1.Controls.Add(labelGatewayIP);
+            tabPage1.Controls.Add(textBoxGatewayIP);
+            tabPage1.Controls.Add(textBoxPacketSize);
+            tabPage1.Location = new Point(4, 24);
+            tabPage1.Name = "tabPage1";
+            tabPage1.Padding = new Padding(3);
+            tabPage1.Size = new Size(418, 620);
+            tabPage1.TabIndex = 0;
+            tabPage1.Text = "Ping";
+            tabPage1.UseVisualStyleBackColor = true;
+            // 
+            // tabPage2
+            // 
+            tabPage2.Controls.Add(resetViaButton);
+            tabPage2.Controls.Add(SigStrTextBox);
+            tabPage2.Controls.Add(label6);
+            tabPage2.Controls.Add(label5);
+            tabPage2.Controls.Add(label4);
+            tabPage2.Controls.Add(label3);
+            tabPage2.Controls.Add(label2);
+            tabPage2.Controls.Add(label1);
+            tabPage2.Controls.Add(CINRtextBox);
+            tabPage2.Controls.Add(runViaButton);
+            tabPage2.Controls.Add(RSSItextBox);
+            tabPage2.Controls.Add(ssOutputTextbox);
+            tabPage2.Controls.Add(SINRtextBox);
+            tabPage2.Controls.Add(RSRPtextBox);
+            tabPage2.Controls.Add(RSRQtextBox);
+            tabPage2.Controls.Add(checkBoxLTE);
+            tabPage2.Controls.Add(checkBox4G);
+            tabPage2.Controls.Add(checkBox3G);
+            tabPage2.Location = new Point(4, 24);
+            tabPage2.Name = "tabPage2";
+            tabPage2.Padding = new Padding(3);
+            tabPage2.Size = new Size(418, 620);
+            tabPage2.TabIndex = 1;
+            tabPage2.Text = "Signal";
+            tabPage2.UseVisualStyleBackColor = true;
+            // 
+            // resetViaButton
+            // 
+            resetViaButton.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point);
+            resetViaButton.Location = new Point(253, 155);
+            resetViaButton.Name = "resetViaButton";
+            resetViaButton.Size = new Size(147, 32);
+            resetViaButton.TabIndex = 10;
+            resetViaButton.Text = "Reset";
+            resetViaButton.UseVisualStyleBackColor = true;
+            resetViaButton.Click += resetViaButton_Click;
+            // 
+            // SigStrTextBox
+            // 
+            SigStrTextBox.Location = new Point(103, 23);
+            SigStrTextBox.Name = "SigStrTextBox";
+            SigStrTextBox.Size = new Size(100, 23);
+            SigStrTextBox.TabIndex = 3;
+            // 
+            // label6
+            // 
+            label6.AutoSize = true;
+            label6.Location = new Point(6, 23);
+            label6.Name = "label6";
+            label6.Size = new Size(87, 15);
+            label6.TabIndex = 15;
+            label6.Text = "Signal Strength";
+            // 
+            // label5
+            // 
+            label5.AutoSize = true;
+            label5.Location = new Point(6, 166);
+            label5.Name = "label5";
+            label5.Size = new Size(87, 15);
+            label5.TabIndex = 14;
+            label5.Text = "CINR (4G Only)";
+            // 
+            // label4
+            // 
+            label4.AutoSize = true;
+            label4.Location = new Point(6, 137);
+            label4.Name = "label4";
+            label4.Size = new Size(88, 15);
+            label4.TabIndex = 13;
+            label4.Text = "SINR (LTE Only)";
+            // 
+            // label3
+            // 
+            label3.AutoSize = true;
+            label3.Location = new Point(6, 108);
+            label3.Name = "label3";
+            label3.Size = new Size(34, 15);
+            label3.TabIndex = 12;
+            label3.Text = "RSRP";
+            // 
+            // label2
+            // 
+            label2.AutoSize = true;
+            label2.Location = new Point(6, 79);
+            label2.Name = "label2";
+            label2.Size = new Size(36, 15);
+            label2.TabIndex = 11;
+            label2.Text = "RSRQ";
+            // 
+            // label1
+            // 
+            label1.AutoSize = true;
+            label1.Location = new Point(6, 52);
+            label1.Name = "label1";
+            label1.Size = new Size(29, 15);
+            label1.TabIndex = 10;
+            label1.Text = "RSSI";
+            // 
+            // CINRtextBox
+            // 
+            CINRtextBox.Location = new Point(103, 166);
+            CINRtextBox.Name = "CINRtextBox";
+            CINRtextBox.Size = new Size(100, 23);
+            CINRtextBox.TabIndex = 8;
+            // 
+            // runViaButton
+            // 
+            runViaButton.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point);
+            runViaButton.Location = new Point(253, 120);
+            runViaButton.Name = "runViaButton";
+            runViaButton.Size = new Size(147, 32);
+            runViaButton.TabIndex = 9;
+            runViaButton.Text = "Run";
+            runViaButton.UseVisualStyleBackColor = true;
+            // 
+            // RSSItextBox
+            // 
+            RSSItextBox.AccessibleName = "RSSI";
+            RSSItextBox.Location = new Point(103, 52);
+            RSSItextBox.Name = "RSSItextBox";
+            RSSItextBox.Size = new Size(100, 23);
+            RSSItextBox.TabIndex = 4;
+            // 
+            // ssOutputTextbox
+            // 
+            ssOutputTextbox.Location = new Point(6, 210);
+            ssOutputTextbox.Multiline = true;
+            ssOutputTextbox.Name = "ssOutputTextbox";
+            ssOutputTextbox.Size = new Size(406, 404);
+            ssOutputTextbox.TabIndex = 11;
+            // 
+            // SINRtextBox
+            // 
+            SINRtextBox.Location = new Point(103, 137);
+            SINRtextBox.Name = "SINRtextBox";
+            SINRtextBox.Size = new Size(100, 23);
+            SINRtextBox.TabIndex = 7;
+            // 
+            // RSRPtextBox
+            // 
+            RSRPtextBox.Location = new Point(103, 108);
+            RSRPtextBox.Name = "RSRPtextBox";
+            RSRPtextBox.Size = new Size(100, 23);
+            RSRPtextBox.TabIndex = 6;
+            // 
+            // RSRQtextBox
+            // 
+            RSRQtextBox.Location = new Point(103, 79);
+            RSRQtextBox.Name = "RSRQtextBox";
+            RSRQtextBox.Size = new Size(100, 23);
+            RSRQtextBox.TabIndex = 5;
+            // 
+            // checkBoxLTE
+            // 
+            checkBoxLTE.AutoSize = true;
+            checkBoxLTE.Location = new Point(253, 83);
+            checkBoxLTE.Name = "checkBoxLTE";
+            checkBoxLTE.Size = new Size(43, 19);
+            checkBoxLTE.TabIndex = 2;
+            checkBoxLTE.Text = "LTE";
+            checkBoxLTE.UseVisualStyleBackColor = true;
+            checkBoxLTE.CheckedChanged += CheckBoxLTE_CheckedChanged;
+            // 
+            // checkBox4G
+            // 
+            checkBox4G.AutoSize = true;
+            checkBox4G.Location = new Point(253, 56);
+            checkBox4G.Name = "checkBox4G";
+            checkBox4G.Size = new Size(80, 19);
+            checkBox4G.TabIndex = 1;
+            checkBox4G.Text = "4G WiMax";
+            checkBox4G.UseVisualStyleBackColor = true;
+            checkBox4G.CheckedChanged += CheckBox4G_CheckedChanged;
+            // 
+            // checkBox3G
+            // 
+            checkBox3G.AutoSize = true;
+            checkBox3G.Location = new Point(253, 27);
+            checkBox3G.Name = "checkBox3G";
+            checkBox3G.Size = new Size(73, 19);
+            checkBox3G.TabIndex = 0;
+            checkBox3G.Text = "3G EVDO";
+            checkBox3G.UseVisualStyleBackColor = true;
+            checkBox3G.CheckedChanged += CheckBox3G_CheckedChanged;
             // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
+            BackColor = SystemColors.Control;
             ClientSize = new Size(424, 660);
-            Controls.Add(buttonCancel);
-            Controls.Add(checkBoxSlowPings);
-            Controls.Add(checkBoxSaveToLogFile);
-            Controls.Add(outputTextBox);
-            Controls.Add(buttonReset);
-            Controls.Add(buttonRunPing);
-            Controls.Add(textBoxGatewayIP);
-            Controls.Add(textBoxUsableIP);
-            Controls.Add(textBoxPacketSize);
-            Controls.Add(labelGatewayIP);
-            Controls.Add(labelUsableIP);
-            Controls.Add(labelNumPings);
-            Controls.Add(labelPacketSize);
-            Controls.Add(linkLabel);
-            Controls.Add(textBoxNumPings);
+            Controls.Add(tabControl1);
+            FormBorderStyle = FormBorderStyle.FixedSingle;
             Margin = new Padding(4, 3, 4, 3);
             Name = "Form1";
             Text = "Ping Tool";
             ((System.ComponentModel.ISupportInitialize)pingChart).EndInit();
+            tabControl1.ResumeLayout(false);
+            tabPage1.ResumeLayout(false);
+            tabPage1.PerformLayout();
+            tabPage2.ResumeLayout(false);
+            tabPage2.PerformLayout();
             ResumeLayout(false);
-            PerformLayout();
         }
     }
 }
