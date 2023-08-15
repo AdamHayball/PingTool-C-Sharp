@@ -258,7 +258,7 @@ namespace PingTool.NET
             for (int i = 0; i < numPings; i++)
             {
                 // Add a delay between pings if the checkbox is checked
-                int delay = checkBoxSlowPings.Checked ? 500 : 0;
+                int delay = checkBoxSlowPings.Checked ? 1000 : 0;
                 Thread.Sleep(delay); // Add the delay
 
                 // Check if the cancellation has been requested
@@ -268,7 +268,7 @@ namespace PingTool.NET
                     break;
                 }
 
-                var reply = pingSender.Send(ipAddress, 1000, new byte[packetSize], pingOptions);
+                var reply = pingSender.Send(ipAddress, 2000, new byte[packetSize], pingOptions);
 
                 if (reply.Status == IPStatus.Success)
                 {
@@ -399,7 +399,7 @@ namespace PingTool.NET
                 double.TryParse(RSRQtextBox.Text, out double rsrq))
             {
                 string signalStrengthResult = GetSignalStrengthResult(signalStrength);
-                string rssiResult = GetRssiResult(rssi);
+                string rssiResult = GetRssiResult(rssi, checkBox3G.Checked, checkBox4G.Checked, checkBoxLTE.Checked);
                 string rsrpResult = GetRsrpResult(rsrp);
                 string rsrqResult = GetRsrqResult(rsrq);
 
@@ -511,33 +511,58 @@ namespace PingTool.NET
 
         private string GetSignalStrengthResult(double value)
         {
-            if (value >= 0 && value <= 25) return "Unacceptable";
+            if (value <= 0) return "Error! Enter positive number";
+            if (value >= 1 && value <= 25) return "Unacceptable";
             if (value >= 26 && value <= 50) return "Borderline";
             if (value >= 51 && value <= 75) return "Good";
             if (value >= 76 && value <= 100) return "Excellent";
             return "Invalid value";
         }
 
-        private string GetRssiResult(double value)
+        private string GetRssiResult(double value, bool is3GChecked, bool is4GChecked, bool isLTEChecked)
         {
-            if (value >= -100 && value <= -90) return "Unacceptable";
-            if (value >= -89 && value <= -80) return "Borderline";
-            if (value >= -79 && value <= -60) return "Good";
-            if (value >= -59 && value <= -1) return "Excellent";
+            if (!is3GChecked && !is4GChecked && !isLTEChecked)
+            {
+                // Default to 4G/LTE logic
+                if (value >= -100 && value <= -80) return "Unacceptable";
+                if (value >= -79 && value <= -70) return "Borderline";
+                if (value >= -69 && value <= -50) return "Good";
+                if (value >= -49 && value <= -40) return "Excellent";
+                if (value >= 0) return "Error! Enter negative number";
+            }
+            else if (is3GChecked)
+            {
+                if (value >= -100 && value <= -90) return "Unacceptable";
+                if (value >= -89 && value <= -80) return "Borderline";
+                if (value >= -79 && value <= -60) return "Good";
+                if (value >= -59 && value <= -50) return "Excellent";
+                if (value >= 0) return "Error! Enter negative number";
+            }
+            else if (is4GChecked || isLTEChecked)
+            {
+                if (value >= -100 && value <= -80) return "Unacceptable";
+                if (value >= -79 && value <= -70) return "Borderline";
+                if (value >= -69 && value <= -50) return "Good";
+                if (value >= -49 && value <= -40) return "Excellent";
+                if (value >= 0) return "Error! Enter negative number";
+            }
+
             return "Invalid value";
         }
 
         private string GetRsrpResult(double value)
         {
+            if (value >= 0) return "Error! Enter negative number";
             if (value <= -100) return "Cell Edge";
-            if (value >= -90 && value <= -100) return "Mid Cell";
-            if (value >= -80 && value <= -89) return "Good";
+            if (value >= -90 && value <= -99) return "Mid Cell";
+            if (value >= -80 && value < -90) return "Good";
             if (value >= -80) return "Excellent";
             return "Invalid value";
         }
 
         private string GetRsrqResult(double value)
         {
+            if (value >= 0) return "Error! Enter negative number";
             if (value < -20) return "Cell Edge";
             if (value >= -15 && value <= -19) return "Mid Cell";
             if (value >= -10 && value <= -14) return "Good";
@@ -547,6 +572,7 @@ namespace PingTool.NET
 
         private string GetSinrResult(double value)
         {
+            if (value <= 0) return "Error! Enter positive number";
             if (value < 5) return "Unstable";
             if (value >= 6 && value <= 9) return "Signal Dependent";
             if (value >= 10 && value <= 14) return "Good";
@@ -556,6 +582,7 @@ namespace PingTool.NET
 
         private string GetCinrResult(double value)
         {
+            if (value <= 0) return "Error! Enter positive number";
             if (value < 5) return "Unstable";
             if (value >= 6 && value <= 9) return "Signal Dependent";
             if (value >= 10 && value <= 14) return "Good";
