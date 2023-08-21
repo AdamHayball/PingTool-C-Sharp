@@ -25,6 +25,9 @@ As an additional point, I must acknowledge that I haven't yet attained mastery i
 
 By the way, I had ChatGPT revise the README – quite amusing! XD
 
+## Version 1.4.2
+- Fixed bug that would crash application if unresolvable IP or Hostname was entered by adding error message for exception
+
 ## Version 1.4.1
 - Changed "Slow Ping" delay from 500ms to 1000ms as some ISPs would block ICMP at 500ms delay time.
 - Changed packet timeout from 1000ms to 2000ms to account for pinging Global WAN and Wireless AP circuits.

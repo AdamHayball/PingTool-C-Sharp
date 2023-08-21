@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Net.NetworkInformation;
+using System.Net.Sockets;
 using System.Reflection;
 using System.Text;
 using System.Windows.Forms;
@@ -245,7 +246,18 @@ namespace PingTool.NET
 
         private async Task<string> RunPingAsync(string ipAddress, int numPings, int packetSize, CancellationToken cancellationToken, Series series)
         {
-            return await Task.Run(() => RunPing(ipAddress, numPings, packetSize, cancellationToken, series), cancellationToken);
+            try
+            {
+                return await Task.Run(() => RunPing(ipAddress, numPings, packetSize, cancellationToken, series), cancellationToken);
+            }
+            catch (PingException ex)
+            {
+                return $"Error pinging {ipAddress}: {ex.Message}{Environment.NewLine}";
+            }
+            catch (Exception ex)
+            {
+                return $"An error occurred while pinging {ipAddress}: {ex.Message}{Environment.NewLine}";
+            }
         }
         private string RunPing(string ipAddress, int numPings, int packetSize, CancellationToken cancellationToken, Series series)
         {
@@ -254,6 +266,8 @@ namespace PingTool.NET
             var pingOptions = new PingOptions();
             var latencies = new List<long>();
             bool timeoutMessageAdded = false;
+
+            bool errorMessageAdded = false;
 
             for (int i = 0; i < numPings; i++)
             {
@@ -268,27 +282,53 @@ namespace PingTool.NET
                     break;
                 }
 
-                var reply = pingSender.Send(ipAddress, 2000, new byte[packetSize], pingOptions);
-
-                if (reply.Status == IPStatus.Success)
+                try
                 {
-                    latencies.Add(reply.RoundtripTime);
+                    var reply = pingSender.Send(ipAddress, 2000, new byte[packetSize], pingOptions);
+
+                    if (reply.Status == IPStatus.Success)
+                    {
+                        latencies.Add(reply.RoundtripTime);
+
+                        // Update the chart with the new ping result on the main UI thread
+                        this.Invoke(new Action(() => UpdatePingChart(ipAddress, i + 1, reply.RoundtripTime, series)));
+                    }
+                    else
+                    {
+                        if (!timeoutMessageAdded)
+                        {
+                            pingResults += "Request timed out." + Environment.NewLine;
+                            timeoutMessageAdded = true;
+                        }
+                    }
 
                     // Update the chart with the new ping result on the main UI thread
                     this.Invoke(new Action(() => UpdatePingChart(ipAddress, i + 1, reply.RoundtripTime, series)));
                 }
-                else
+                catch (PingException ex)
                 {
-                    if (!timeoutMessageAdded)
+                    if (!errorMessageAdded)
                     {
-                        pingResults += "Request timed out." + Environment.NewLine;
-                        timeoutMessageAdded = true;
+                        pingResults += $"Error pinging {ipAddress}: {ex.Message}" + Environment.NewLine;
+                        errorMessageAdded = true;
                     }
                 }
-
-                // Update the chart with the new ping result on the main UI thread
-                this.Invoke(new Action(() => UpdatePingChart(ipAddress, i + 1, reply.RoundtripTime, series)));
-
+                catch (SocketException ex)
+                {
+                    if (!errorMessageAdded)
+                    {
+                        pingResults += $"Error resolving or connecting to {ipAddress}: {ex.Message}" + Environment.NewLine;
+                        errorMessageAdded = true;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    if (!errorMessageAdded)
+                    {
+                        pingResults += $"An error occurred while pinging {ipAddress}: {ex.Message}" + Environment.NewLine;
+                        errorMessageAdded = true;
+                    }
+                }
             }
 
             // Calculate and display statistics based on the actual 'numPings'
@@ -298,7 +338,6 @@ namespace PingTool.NET
 
             pingResults += Environment.NewLine + $"Ping statistics for {ipAddress}:" + Environment.NewLine;
             pingResults += $"    Packets: Sent = {numPings}, Received = {received}, Lost = {lost} (Loss Percentage = {lossPercentage:F2}%)" + Environment.NewLine;
-
 
             if (received > 0)
             {
