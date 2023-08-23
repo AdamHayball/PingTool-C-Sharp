@@ -25,6 +25,10 @@ As an additional point, I must acknowledge that I haven't yet attained mastery i
 
 By the way, I had ChatGPT revise the README – quite amusing! XD
 
+## Version 1.5.0
+- Added navigation tab for DSL
+- Added DSL signal comparison program (currently generic ADSL only)
+
 ## Version 1.4.3
 - Fixed RSRQ: -20 dB reporting invalid value error. Anything under -20 is considered cell edge
 - Fixed SINR/CINR negative value reporting invalid value, This is valid and indicates NR > S power levels

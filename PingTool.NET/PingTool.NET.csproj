@@ -9,9 +9,9 @@
 			<ImplicitUsings>enable</ImplicitUsings>
 			<ApplicationIcon>Resources\SPTMulti.ico</ApplicationIcon>
 			<Copyright>Copyright © Adam Hayball 2023</Copyright>
-			<AssemblyVersion>1.4.3</AssemblyVersion>
-			<AssemblyInformationalVersion>1.4.3-REL</AssemblyInformationalVersion>
-			<FileVersion>1.4.3</FileVersion>
+			<AssemblyVersion>1.5.0</AssemblyVersion>
+			<AssemblyInformationalVersion>1.5.0-REL</AssemblyInformationalVersion>
+			<FileVersion>1.5.0</FileVersion>
 		</PropertyGroup>
 		<ItemGroup>
 			<PackageReference Include="Microsoft.CSharp" Version="4.7.0" />

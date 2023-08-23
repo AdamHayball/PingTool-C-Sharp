@@ -48,6 +48,20 @@ namespace PingTool.NET
         private TextBox SigStrTextBox;
         private Label label6;
         private Button resetViaButton;
+        private TabPage DSLsignal;
+        private Label snrMarginLabel;
+        private Button dsResetButton;
+        private Button dsRunButton;
+        private TextBox dslSignalOutputTextBox;
+        private Label loopLengthLabel;
+        private Label lineAttLabel;
+        private Label transmitPowerLabel;
+        private TextBox loopLengthTextBox;
+        private TextBox snrMarginTextBox;
+        private TextBox transmitPowerTextBox;
+        private TextBox lineAttTextBox;
+        private Label dslWarningLabel1;
+        private Label dslWarningLabel2;
         private List<Task<string>> pingTasks = new List<Task<string>>(); // Moved pingTasks to class level
 
         public Form1()
@@ -73,10 +87,6 @@ namespace PingTool.NET
 
             // Add the second series for Gateway IP with green color
             AddSeriesToChart("GatewayIP", Color.Green);
-
-            runViaButton.Click += RunViability_Click;
-
-
         }
 
         private void LinkLabel1_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
@@ -648,10 +658,135 @@ namespace PingTool.NET
             ssOutputTextbox.Clear();
         }
 
+        //
+        // ADSL Form
+        //
+        private void dsResetButton_Click(object sender, EventArgs e)
+        {
+            ClearInputFields();
+            ClearOutputField();
+        }
+
+        private void ClearInputFields()
+        {
+            snrMarginTextBox.Clear();
+            loopLengthTextBox.Clear();
+            lineAttTextBox.Clear();
+            transmitPowerTextBox.Clear();
+        }
+        private void ClearOutputField()
+        {
+            dslSignalOutputTextBox.Clear();
+        }
+        private void dsRunButton_Click(object sender, EventArgs e)
+        {
+            string snrMarginInput = snrMarginTextBox.Text;
+            string loopLengthInput = loopLengthTextBox.Text;
+            string lineAttenuationInput = lineAttTextBox.Text;
+            string transmitPowerInput = transmitPowerTextBox.Text;
+
+            if (string.IsNullOrWhiteSpace(snrMarginInput) ||
+            string.IsNullOrWhiteSpace(loopLengthInput) ||
+            string.IsNullOrWhiteSpace(lineAttenuationInput) ||
+            string.IsNullOrWhiteSpace(transmitPowerInput))
+            {
+                dslSignalOutputTextBox.Text = "Please enter valid input values.";
+                return;
+            }
+
+            string snrMarginOutput = GetSNRMarginOutput(snrMarginInput);
+            string loopLengthOutput = GetLoopLengthOutput(loopLengthInput);
+            string lineAttenuationOutput = GetLineAttenuationOutput(lineAttenuationInput);
+            string transmitPowerOutput = GetTransmitPowerOutput(transmitPowerInput);
+
+            string outputText = $"SNR Margin: {snrMarginOutput}\r\n" +
+                                $"Loop Length: {loopLengthOutput}\r\n" +
+                                $"Line Attenuation: {lineAttenuationOutput}\r\n" +
+                                $"Transmit Power: {transmitPowerOutput}";
+
+            dslSignalOutputTextBox.Text = outputText;
+        }
+
+        private string GetSNRMarginOutput(string input)
+        {
+            int snrMarginValue = int.Parse(input);
+
+            string snrMarginUnit = "dB";
+            string snrMarginLevel = "";
+
+            if (snrMarginValue < 6)
+                snrMarginLevel = "Bad";
+            else if (snrMarginValue >= 6 && snrMarginValue <= 10)
+                snrMarginLevel = "Fair";
+            else if (snrMarginValue > 10 && snrMarginValue <= 15)
+                snrMarginLevel = "Good";
+            else
+                snrMarginLevel = "Excellent";
+
+            return $"{snrMarginValue} {snrMarginUnit} {snrMarginLevel}";
+        }
+
+        private string GetLoopLengthOutput(string input)
+        {
+            double loopLengthValue = double.Parse(input);
+
+            string loopLengthUnit = "mile";
+            string loopLengthLevel = "";
+
+            if (loopLengthValue < 1.6)
+                loopLengthLevel = "Excellent";
+            else if (loopLengthValue >= 1.6 && loopLengthValue <= 3.2)
+                loopLengthLevel = "Good";
+            else if (loopLengthValue > 3.2)
+                loopLengthLevel = "Fair to Poor";
+            else
+                loopLengthLevel = "Poor";
+
+            return $"{loopLengthValue} {loopLengthUnit} {loopLengthLevel}";
+        }
+
+        private string GetLineAttenuationOutput(string input)
+        {
+            int lineAttenuationValue = int.Parse(input);
+
+            string lineAttenuationUnit = "dB";
+            string lineAttenuationLevel = "";
+
+            if (lineAttenuationValue > 60)
+                lineAttenuationLevel = "Bad";
+            else if (lineAttenuationValue >= 40 && lineAttenuationValue <= 60)
+                lineAttenuationLevel = "Fair";
+            else if (lineAttenuationValue >= 25 && lineAttenuationValue <= 40)
+                lineAttenuationLevel = "Good";
+            else
+                lineAttenuationLevel = "Excellent";
+
+            return $"{lineAttenuationValue} {lineAttenuationUnit} {lineAttenuationLevel}";
+        }
+
+        private string GetTransmitPowerOutput(string input)
+        {
+            int transmitPowerValue = int.Parse(input);
+
+            string transmitPowerUnit = "dBm";
+            string transmitPowerLevel = "";
+
+            if (transmitPowerValue < -20)
+                transmitPowerLevel = "Bad";
+            else if (transmitPowerValue >= -20 && transmitPowerValue <= -10)
+                transmitPowerLevel = "Fair";
+            else if (transmitPowerValue >= -10 && transmitPowerValue <= 0)
+                transmitPowerLevel = "Good";
+            else
+                transmitPowerLevel = "Excellent";
+
+            return $"{transmitPowerValue} {transmitPowerUnit} {transmitPowerLevel}";
+        }
+
         private void InitializeComponent()
         {
-            ChartArea chartArea1 = new ChartArea();
-            Legend legend1 = new Legend();
+            ChartArea chartArea2 = new ChartArea();
+            Legend legend2 = new Legend();
             pingChart = new Chart();
             textBoxUsableIP = new TextBox();
             textBoxGatewayIP = new TextBox();
@@ -689,21 +824,36 @@ namespace PingTool.NET
             checkBoxLTE = new CheckBox();
             checkBox4G = new CheckBox();
             checkBox3G = new CheckBox();
+            DSLsignal = new TabPage();
+            dslWarningLabel2 = new Label();
+            dslWarningLabel1 = new Label();
+            transmitPowerTextBox = new TextBox();
+            lineAttTextBox = new TextBox();
+            loopLengthTextBox = new TextBox();
+            snrMarginTextBox = new TextBox();
+            transmitPowerLabel = new Label();
+            lineAttLabel = new Label();
+            loopLengthLabel = new Label();
+            snrMarginLabel = new Label();
+            dsResetButton = new Button();
+            dsRunButton = new Button();
+            dslSignalOutputTextBox = new TextBox();
             ((System.ComponentModel.ISupportInitialize)pingChart).BeginInit();
             tabControl1.SuspendLayout();
             tabPage1.SuspendLayout();
             tabPage2.SuspendLayout();
+            DSLsignal.SuspendLayout();
             SuspendLayout();
             // 
             // pingChart
             // 
-            chartArea1.Name = "PingChartArea";
-            pingChart.ChartAreas.Add(chartArea1);
-            legend1.Alignment = StringAlignment.Center;
-            legend1.Docking = Docking.Bottom;
-            legend1.LegendStyle = LegendStyle.Row;
-            legend1.Name = "Legend";
-            pingChart.Legends.Add(legend1);
+            chartArea2.Name = "PingChartArea";
+            pingChart.ChartAreas.Add(chartArea2);
+            legend2.Alignment = StringAlignment.Center;
+            legend2.Docking = Docking.Bottom;
+            legend2.LegendStyle = LegendStyle.Row;
+            legend2.Name = "Legend";
+            pingChart.Legends.Add(legend2);
             pingChart.Location = new Point(10, 367);
             pingChart.Name = "pingChart";
             pingChart.Size = new Size(400, 245);
@@ -860,6 +1010,7 @@ namespace PingTool.NET
             // 
             tabControl1.Controls.Add(tabPage1);
             tabControl1.Controls.Add(tabPage2);
+            tabControl1.Controls.Add(DSLsignal);
             tabControl1.Location = new Point(1, 0);
             tabControl1.Name = "tabControl1";
             tabControl1.SelectedIndex = 0;
@@ -917,7 +1068,7 @@ namespace PingTool.NET
             tabPage2.Padding = new Padding(3);
             tabPage2.Size = new Size(418, 620);
             tabPage2.TabIndex = 1;
-            tabPage2.Text = "Signal";
+            tabPage2.Text = "WLS";
             tabPage2.UseVisualStyleBackColor = true;
             // 
             // resetViaButton
@@ -1008,6 +1159,7 @@ namespace PingTool.NET
             runViaButton.TabIndex = 9;
             runViaButton.Text = "Run";
             runViaButton.UseVisualStyleBackColor = true;
+            runViaButton.Click += RunViability_Click;
             // 
             // RSSItextBox
             // 
@@ -1079,6 +1231,141 @@ namespace PingTool.NET
             checkBox3G.UseVisualStyleBackColor = true;
             checkBox3G.CheckedChanged += CheckBox3G_CheckedChanged;
             // 
+            // DSLsignal
+            // 
+            DSLsignal.Controls.Add(dslWarningLabel2);
+            DSLsignal.Controls.Add(dslWarningLabel1);
+            DSLsignal.Controls.Add(transmitPowerTextBox);
+            DSLsignal.Controls.Add(lineAttTextBox);
+            DSLsignal.Controls.Add(loopLengthTextBox);
+            DSLsignal.Controls.Add(snrMarginTextBox);
+            DSLsignal.Controls.Add(transmitPowerLabel);
+            DSLsignal.Controls.Add(lineAttLabel);
+            DSLsignal.Controls.Add(loopLengthLabel);
+            DSLsignal.Controls.Add(snrMarginLabel);
+            DSLsignal.Controls.Add(dsResetButton);
+            DSLsignal.Controls.Add(dsRunButton);
+            DSLsignal.Controls.Add(dslSignalOutputTextBox);
+            DSLsignal.Location = new Point(4, 24);
+            DSLsignal.Name = "DSLsignal";
+            DSLsignal.Padding = new Padding(3);
+            DSLsignal.Size = new Size(418, 620);
+            DSLsignal.TabIndex = 2;
+            DSLsignal.Text = "DSL";
+            DSLsignal.UseVisualStyleBackColor = true;
+            // 
+            // dslWarningLabel2
+            // 
+            dslWarningLabel2.AutoSize = true;
+            dslWarningLabel2.Location = new Point(76, 148);
+            dslWarningLabel2.Name = "dslWarningLabel2";
+            dslWarningLabel2.Size = new Size(271, 15);
+            dslWarningLabel2.TabIndex = 12;
+            dslWarningLabel2.Text = "Actual values will vary by carrier and specification.";
+            // 
+            // dslWarningLabel1
+            // 
+            dslWarningLabel1.AutoSize = true;
+            dslWarningLabel1.Location = new Point(50, 133);
+            dslWarningLabel1.Name = "dslWarningLabel1";
+            dslWarningLabel1.Size = new Size(319, 15);
+            dslWarningLabel1.TabIndex = 11;
+            dslWarningLabel1.Text = "***WARNING*** These values are for a generic ADSL circuit.";
+            // 
+            // transmitPowerTextBox
+            // 
+            transmitPowerTextBox.Location = new Point(104, 95);
+            transmitPowerTextBox.Name = "transmitPowerTextBox";
+            transmitPowerTextBox.Size = new Size(100, 23);
+            transmitPowerTextBox.TabIndex = 10;
+            // 
+            // lineAttTextBox
+            // 
+            lineAttTextBox.Location = new Point(104, 63);
+            lineAttTextBox.Name = "lineAttTextBox";
+            lineAttTextBox.Size = new Size(100, 23);
+            lineAttTextBox.TabIndex = 9;
+            // 
+            // loopLengthTextBox
+            // 
+            loopLengthTextBox.Location = new Point(104, 34);
+            loopLengthTextBox.Name = "loopLengthTextBox";
+            loopLengthTextBox.Size = new Size(100, 23);
+            loopLengthTextBox.TabIndex = 8;
+            // 
+            // snrMarginTextBox
+            // 
+            snrMarginTextBox.Location = new Point(104, 6);
+            snrMarginTextBox.Name = "snrMarginTextBox";
+            snrMarginTextBox.Size = new Size(100, 23);
+            snrMarginTextBox.TabIndex = 7;
+            // 
+            // transmitPowerLabel
+            // 
+            transmitPowerLabel.AutoSize = true;
+            transmitPowerLabel.Location = new Point(3, 98);
+            transmitPowerLabel.Name = "transmitPowerLabel";
+            transmitPowerLabel.Size = new Size(88, 15);
+            transmitPowerLabel.TabIndex = 6;
+            transmitPowerLabel.Text = "Transmit Power";
+            // 
+            // lineAttLabel
+            // 
+            lineAttLabel.AutoSize = true;
+            lineAttLabel.Location = new Point(3, 66);
+            lineAttLabel.Name = "lineAttLabel";
+            lineAttLabel.Size = new Size(95, 15);
+            lineAttLabel.TabIndex = 5;
+            lineAttLabel.Text = "Line Attenuation";
+            // 
+            // loopLengthLabel
+            // 
+            loopLengthLabel.AutoSize = true;
+            loopLengthLabel.Location = new Point(3, 37);
+            loopLengthLabel.Name = "loopLengthLabel";
+            loopLengthLabel.Size = new Size(74, 15);
+            loopLengthLabel.TabIndex = 4;
+            loopLengthLabel.Text = "Loop Length";
+            // 
+            // snrMarginLabel
+            // 
+            snrMarginLabel.AutoSize = true;
+            snrMarginLabel.Location = new Point(3, 9);
+            snrMarginLabel.Name = "snrMarginLabel";
+            snrMarginLabel.Size = new Size(70, 15);
+            snrMarginLabel.TabIndex = 3;
+            snrMarginLabel.Text = "SNR Margin";
+            // 
+            // dsResetButton
+            // 
+            dsResetButton.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point);
+            dsResetButton.Location = new Point(245, 81);
+            dsResetButton.Name = "dsResetButton";
+            dsResetButton.Size = new Size(147, 32);
+            dsResetButton.TabIndex = 2;
+            dsResetButton.Text = "Reset";
+            dsResetButton.UseVisualStyleBackColor = true;
+            dsResetButton.Click += dsResetButton_Click;
+            // 
+            // dsRunButton
+            // 
+            dsRunButton.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point);
+            dsRunButton.Location = new Point(245, 26);
+            dsRunButton.Name = "dsRunButton";
+            dsRunButton.Size = new Size(147, 32);
+            dsRunButton.TabIndex = 1;
+            dsRunButton.Text = "Run";
+            dsRunButton.UseVisualStyleBackColor = true;
+            dsRunButton.Click += dsRunButton_Click;
+            // 
+            // dslSignalOutputTextBox
+            // 
+            dslSignalOutputTextBox.Location = new Point(7, 183);
+            dslSignalOutputTextBox.Multiline = true;
+            dslSignalOutputTextBox.Name = "dslSignalOutputTextBox";
+            dslSignalOutputTextBox.Size = new Size(400, 431);
+            dslSignalOutputTextBox.TabIndex = 0;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -1096,6 +1383,8 @@ namespace PingTool.NET
             tabPage1.PerformLayout();
             tabPage2.ResumeLayout(false);
             tabPage2.PerformLayout();
+            DSLsignal.ResumeLayout(false);
+            DSLsignal.PerformLayout();
             ResumeLayout(false);
         }
     }
