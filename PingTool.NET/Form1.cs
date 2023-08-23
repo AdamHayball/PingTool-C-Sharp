@@ -602,7 +602,7 @@ namespace PingTool.NET
         private string GetRsrqResult(double value)
         {
             if (value >= 0) return "Error! Enter negative number";
-            if (value < -20) return "Cell Edge";
+            if (value <= -20) return "Cell Edge";
             if (value >= -15 && value <= -19) return "Mid Cell";
             if (value >= -10 && value <= -14) return "Good";
             if (value >= -10) return "Excellent";
@@ -611,7 +611,7 @@ namespace PingTool.NET
 
         private string GetSinrResult(double value)
         {
-            if (value <= 0) return "Error! Enter positive number";
+            if (value <= 0) return "High Interference Noise";
             if (value < 5) return "Unstable";
             if (value >= 6 && value <= 9) return "Signal Dependent";
             if (value >= 10 && value <= 14) return "Good";
@@ -621,7 +621,7 @@ namespace PingTool.NET
 
         private string GetCinrResult(double value)
         {
-            if (value <= 0) return "Error! Enter positive number";
+            if (value <= 0) return "High Interference Noise";
             if (value < 5) return "Unstable";
             if (value >= 6 && value <= 9) return "Signal Dependent";
             if (value >= 10 && value <= 14) return "Good";
