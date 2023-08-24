@@ -601,11 +601,11 @@ namespace PingTool.NET
 
         private string GetRsrpResult(double value)
         {
-            if (value >= 0) return "Error! Enter negative number";
+            if (value >= 0) return "Error! Enter a negative number";
             if (value <= -100) return "Cell Edge";
-            if (value >= -90 && value <= -99) return "Mid Cell";
-            if (value >= -80 && value < -90) return "Good";
-            if (value >= -80) return "Excellent";
+            if (value <= -90) return "Mid Cell";
+            if (value <= -80) return "Good";
+            if (value > -80) return "Excellent";
             return "Invalid value";
         }
 

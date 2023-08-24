@@ -25,6 +25,9 @@ As an additional point, I must acknowledge that I haven't yet attained mastery i
 
 By the way, I had ChatGPT revise the README – quite amusing! XD
 
+## Version 1.5.1
+- Fixed RSRP overlapping values causing error in output
+
 ## Version 1.5.0
 - Added navigation tab for DSL
 - Added DSL signal comparison program (currently generic ADSL only)
