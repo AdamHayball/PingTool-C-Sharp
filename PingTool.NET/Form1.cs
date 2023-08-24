@@ -62,6 +62,22 @@ namespace PingTool.NET
         private TextBox lineAttTextBox;
         private Label dslWarningLabel1;
         private Label dslWarningLabel2;
+        private TabPage CableSignals;
+        private Label usPowerLabel;
+        private Label dsPowerLabel;
+        private Label dsnrLabel;
+        private Label snrLabel;
+        private TextBox cblSigResultsTextBox;
+        private Label merLabel;
+        private TextBox merInputTextBox;
+        private TextBox usPowerInputTextBox;
+        private TextBox dsPowerInputTextBox;
+        private TextBox dsnrInputTextBox;
+        private TextBox snrPowerInputTextBox;
+        private Button cblSigResetButton;
+        private Button cblSigRunButton;
+        private Label label7;
+        private Label label8;
         private List<Task<string>> pingTasks = new List<Task<string>>(); // Moved pingTasks to class level
 
         public Form1()
@@ -783,10 +799,127 @@ namespace PingTool.NET
             return $"{transmitPowerValue} {transmitPowerUnit} {transmitPowerLevel}";
         }
 
+        //
+        // Cable Signal Tab
+        //
+        private void cblSigRunButton_Click(object sender, EventArgs e)
+        {
+            // Clear the results textbox
+            cblSigResultsTextBox.Clear();
+
+            // Initialize error message
+            string errorMessage = "Invalid values entered for the following fields:\r\n";
+
+            // Process SNR
+            if (!string.IsNullOrEmpty(snrPowerInputTextBox.Text))
+            {
+                if (double.TryParse(snrPowerInputTextBox.Text, out double snr))
+                {
+                    string snrCategory = GetSignalCategory(snr, 25, 30, 35);
+                    cblSigResultsTextBox.AppendText($"SNR (US): {snr} dB - {snrCategory}\r\n");
+                }
+                else
+                {
+                    errorMessage += "- SNR (US)\r\n";
+                }
+            }
+
+            // Process DSNR
+            if (!string.IsNullOrEmpty(dsnrInputTextBox.Text))
+            {
+                if (double.TryParse(dsnrInputTextBox.Text, out double dsnr))
+                {
+                    string dsnrCategory = GetSignalCategory(dsnr, 15, 25, 35);
+                    cblSigResultsTextBox.AppendText($"DSNR: {dsnr} dB - {dsnrCategory}\r\n");
+                }
+                else
+                {
+                    errorMessage += "- DSNR\r\n";
+                }
+            }
+
+            // Process Downstream Signal Power
+            if (!string.IsNullOrEmpty(dsPowerInputTextBox.Text))
+            {
+                if (double.TryParse(dsPowerInputTextBox.Text, out double dsPower))
+                {
+                    string dsPowerCategory = GetSignalCategory(dsPower, -15, 10, 15);
+                    cblSigResultsTextBox.AppendText($"Downstream Power: {dsPower} dBmV - {dsPowerCategory}\r\n");
+                }
+                else
+                {
+                    errorMessage += "- Downstream Power\r\n";
+                }
+            }
+
+            // Process Upstream Signal Power
+            if (!string.IsNullOrEmpty(usPowerInputTextBox.Text))
+            {
+                if (double.TryParse(usPowerInputTextBox.Text, out double usPower))
+                {
+                    string usPowerCategory = GetSignalCategory(usPower, -45, -32, -25);
+                    cblSigResultsTextBox.AppendText($"Upstream Power: {usPower} dBmV - {usPowerCategory}\r\n");
+                }
+                else
+                {
+                    errorMessage += "- Upstream Power\r\n";
+                }
+            }
+
+            // Process MER
+            if (!string.IsNullOrEmpty(merInputTextBox.Text))
+            {
+                if (double.TryParse(merInputTextBox.Text, out double mer))
+                {
+                    string merCategory = GetSignalCategory(mer, 20, 25, 30);
+                    cblSigResultsTextBox.AppendText($"MER: {mer} dB - {merCategory}\r\n");
+                }
+                else
+                {
+                    errorMessage += "- MER\r\n";
+                }
+            }
+
+            // Display error message if needed
+            if (errorMessage != "Invalid values entered for the following fields:\r\n")
+            {
+                MessageBox.Show(errorMessage, "Invalid Values", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+        }
+        private string GetSignalCategory(double value, double badThreshold, double fairThreshold, double goodThreshold)
+        {
+            if (value < badThreshold)
+            {
+                return "Bad";
+            }
+            else if (value < fairThreshold)
+            {
+                return "Fair";
+            }
+            else if (value < goodThreshold)
+            {
+                return "Good";
+            }
+            else
+            {
+                return "Excellent";
+            }
+        }
+
+        private void cblSigResetButton_Click(object sender, EventArgs e)
+        {
+            // Clear input fields and results textbox
+            snrPowerInputTextBox.Clear();
+            dsnrInputTextBox.Clear();
+            dsPowerInputTextBox.Clear();
+            usPowerInputTextBox.Clear();
+            merInputTextBox.Clear();
+            cblSigResultsTextBox.Clear();
+        }
         private void InitializeComponent()
         {
-            ChartArea chartArea2 = new ChartArea();
-            Legend legend2 = new Legend();
+            ChartArea chartArea1 = new ChartArea();
+            Legend legend1 = new Legend();
             pingChart = new Chart();
             textBoxUsableIP = new TextBox();
             textBoxGatewayIP = new TextBox();
@@ -838,22 +971,39 @@ namespace PingTool.NET
             dsResetButton = new Button();
             dsRunButton = new Button();
             dslSignalOutputTextBox = new TextBox();
+            CableSignals = new TabPage();
+            cblSigResetButton = new Button();
+            cblSigRunButton = new Button();
+            merInputTextBox = new TextBox();
+            usPowerInputTextBox = new TextBox();
+            dsPowerInputTextBox = new TextBox();
+            dsnrInputTextBox = new TextBox();
+            snrPowerInputTextBox = new TextBox();
+            merLabel = new Label();
+            usPowerLabel = new Label();
+            dsPowerLabel = new Label();
+            dsnrLabel = new Label();
+            snrLabel = new Label();
+            cblSigResultsTextBox = new TextBox();
+            label7 = new Label();
+            label8 = new Label();
             ((System.ComponentModel.ISupportInitialize)pingChart).BeginInit();
             tabControl1.SuspendLayout();
             tabPage1.SuspendLayout();
             tabPage2.SuspendLayout();
             DSLsignal.SuspendLayout();
+            CableSignals.SuspendLayout();
             SuspendLayout();
             // 
             // pingChart
             // 
-            chartArea2.Name = "PingChartArea";
-            pingChart.ChartAreas.Add(chartArea2);
-            legend2.Alignment = StringAlignment.Center;
-            legend2.Docking = Docking.Bottom;
-            legend2.LegendStyle = LegendStyle.Row;
-            legend2.Name = "Legend";
-            pingChart.Legends.Add(legend2);
+            chartArea1.Name = "PingChartArea";
+            pingChart.ChartAreas.Add(chartArea1);
+            legend1.Alignment = StringAlignment.Center;
+            legend1.Docking = Docking.Bottom;
+            legend1.LegendStyle = LegendStyle.Row;
+            legend1.Name = "Legend";
+            pingChart.Legends.Add(legend1);
             pingChart.Location = new Point(10, 367);
             pingChart.Name = "pingChart";
             pingChart.Size = new Size(400, 245);
@@ -1011,6 +1161,7 @@ namespace PingTool.NET
             tabControl1.Controls.Add(tabPage1);
             tabControl1.Controls.Add(tabPage2);
             tabControl1.Controls.Add(DSLsignal);
+            tabControl1.Controls.Add(CableSignals);
             tabControl1.Location = new Point(1, 0);
             tabControl1.Name = "tabControl1";
             tabControl1.SelectedIndex = 0;
@@ -1068,7 +1219,7 @@ namespace PingTool.NET
             tabPage2.Padding = new Padding(3);
             tabPage2.Size = new Size(418, 620);
             tabPage2.TabIndex = 1;
-            tabPage2.Text = "WLS";
+            tabPage2.Text = "Cell";
             tabPage2.UseVisualStyleBackColor = true;
             // 
             // resetViaButton
@@ -1257,7 +1408,7 @@ namespace PingTool.NET
             // dslWarningLabel2
             // 
             dslWarningLabel2.AutoSize = true;
-            dslWarningLabel2.Location = new Point(76, 148);
+            dslWarningLabel2.Location = new Point(76, 161);
             dslWarningLabel2.Name = "dslWarningLabel2";
             dslWarningLabel2.Size = new Size(271, 15);
             dslWarningLabel2.TabIndex = 12;
@@ -1266,7 +1417,7 @@ namespace PingTool.NET
             // dslWarningLabel1
             // 
             dslWarningLabel1.AutoSize = true;
-            dslWarningLabel1.Location = new Point(50, 133);
+            dslWarningLabel1.Location = new Point(50, 146);
             dslWarningLabel1.Name = "dslWarningLabel1";
             dslWarningLabel1.Size = new Size(319, 15);
             dslWarningLabel1.TabIndex = 11;
@@ -1274,28 +1425,28 @@ namespace PingTool.NET
             // 
             // transmitPowerTextBox
             // 
-            transmitPowerTextBox.Location = new Point(104, 95);
+            transmitPowerTextBox.Location = new Point(108, 110);
             transmitPowerTextBox.Name = "transmitPowerTextBox";
             transmitPowerTextBox.Size = new Size(100, 23);
             transmitPowerTextBox.TabIndex = 10;
             // 
             // lineAttTextBox
             // 
-            lineAttTextBox.Location = new Point(104, 63);
+            lineAttTextBox.Location = new Point(108, 78);
             lineAttTextBox.Name = "lineAttTextBox";
             lineAttTextBox.Size = new Size(100, 23);
             lineAttTextBox.TabIndex = 9;
             // 
             // loopLengthTextBox
             // 
-            loopLengthTextBox.Location = new Point(104, 34);
+            loopLengthTextBox.Location = new Point(108, 49);
             loopLengthTextBox.Name = "loopLengthTextBox";
             loopLengthTextBox.Size = new Size(100, 23);
             loopLengthTextBox.TabIndex = 8;
             // 
             // snrMarginTextBox
             // 
-            snrMarginTextBox.Location = new Point(104, 6);
+            snrMarginTextBox.Location = new Point(108, 21);
             snrMarginTextBox.Name = "snrMarginTextBox";
             snrMarginTextBox.Size = new Size(100, 23);
             snrMarginTextBox.TabIndex = 7;
@@ -1303,7 +1454,7 @@ namespace PingTool.NET
             // transmitPowerLabel
             // 
             transmitPowerLabel.AutoSize = true;
-            transmitPowerLabel.Location = new Point(3, 98);
+            transmitPowerLabel.Location = new Point(7, 113);
             transmitPowerLabel.Name = "transmitPowerLabel";
             transmitPowerLabel.Size = new Size(88, 15);
             transmitPowerLabel.TabIndex = 6;
@@ -1312,7 +1463,7 @@ namespace PingTool.NET
             // lineAttLabel
             // 
             lineAttLabel.AutoSize = true;
-            lineAttLabel.Location = new Point(3, 66);
+            lineAttLabel.Location = new Point(7, 81);
             lineAttLabel.Name = "lineAttLabel";
             lineAttLabel.Size = new Size(95, 15);
             lineAttLabel.TabIndex = 5;
@@ -1321,7 +1472,7 @@ namespace PingTool.NET
             // loopLengthLabel
             // 
             loopLengthLabel.AutoSize = true;
-            loopLengthLabel.Location = new Point(3, 37);
+            loopLengthLabel.Location = new Point(7, 52);
             loopLengthLabel.Name = "loopLengthLabel";
             loopLengthLabel.Size = new Size(74, 15);
             loopLengthLabel.TabIndex = 4;
@@ -1330,7 +1481,7 @@ namespace PingTool.NET
             // snrMarginLabel
             // 
             snrMarginLabel.AutoSize = true;
-            snrMarginLabel.Location = new Point(3, 9);
+            snrMarginLabel.Location = new Point(7, 24);
             snrMarginLabel.Name = "snrMarginLabel";
             snrMarginLabel.Size = new Size(70, 15);
             snrMarginLabel.TabIndex = 3;
@@ -1339,7 +1490,7 @@ namespace PingTool.NET
             // dsResetButton
             // 
             dsResetButton.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point);
-            dsResetButton.Location = new Point(245, 81);
+            dsResetButton.Location = new Point(238, 89);
             dsResetButton.Name = "dsResetButton";
             dsResetButton.Size = new Size(147, 32);
             dsResetButton.TabIndex = 2;
@@ -1350,7 +1501,7 @@ namespace PingTool.NET
             // dsRunButton
             // 
             dsRunButton.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point);
-            dsRunButton.Location = new Point(245, 26);
+            dsRunButton.Location = new Point(238, 34);
             dsRunButton.Name = "dsRunButton";
             dsRunButton.Size = new Size(147, 32);
             dsRunButton.TabIndex = 1;
@@ -1365,6 +1516,159 @@ namespace PingTool.NET
             dslSignalOutputTextBox.Name = "dslSignalOutputTextBox";
             dslSignalOutputTextBox.Size = new Size(400, 431);
             dslSignalOutputTextBox.TabIndex = 0;
+            // 
+            // CableSignals
+            // 
+            CableSignals.Controls.Add(label7);
+            CableSignals.Controls.Add(label8);
+            CableSignals.Controls.Add(cblSigResetButton);
+            CableSignals.Controls.Add(cblSigRunButton);
+            CableSignals.Controls.Add(merInputTextBox);
+            CableSignals.Controls.Add(usPowerInputTextBox);
+            CableSignals.Controls.Add(dsPowerInputTextBox);
+            CableSignals.Controls.Add(dsnrInputTextBox);
+            CableSignals.Controls.Add(snrPowerInputTextBox);
+            CableSignals.Controls.Add(merLabel);
+            CableSignals.Controls.Add(usPowerLabel);
+            CableSignals.Controls.Add(dsPowerLabel);
+            CableSignals.Controls.Add(dsnrLabel);
+            CableSignals.Controls.Add(snrLabel);
+            CableSignals.Controls.Add(cblSigResultsTextBox);
+            CableSignals.Location = new Point(4, 24);
+            CableSignals.Name = "CableSignals";
+            CableSignals.Padding = new Padding(3);
+            CableSignals.Size = new Size(418, 620);
+            CableSignals.TabIndex = 3;
+            CableSignals.Text = "Cable";
+            CableSignals.UseVisualStyleBackColor = true;
+            // 
+            // cblSigResetButton
+            // 
+            cblSigResetButton.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point);
+            cblSigResetButton.Location = new Point(236, 95);
+            cblSigResetButton.Name = "cblSigResetButton";
+            cblSigResetButton.Size = new Size(147, 32);
+            cblSigResetButton.TabIndex = 24;
+            cblSigResetButton.Text = "Reset";
+            cblSigResetButton.UseVisualStyleBackColor = true;
+            cblSigResetButton.Click += cblSigResetButton_Click;
+            // 
+            // cblSigRunButton
+            // 
+            cblSigRunButton.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point);
+            cblSigRunButton.Location = new Point(236, 40);
+            cblSigRunButton.Name = "cblSigRunButton";
+            cblSigRunButton.Size = new Size(147, 32);
+            cblSigRunButton.TabIndex = 23;
+            cblSigRunButton.Text = "Run";
+            cblSigRunButton.UseVisualStyleBackColor = true;
+            cblSigRunButton.Click += cblSigRunButton_Click;
+            // 
+            // merInputTextBox
+            // 
+            merInputTextBox.Location = new Point(97, 133);
+            merInputTextBox.Name = "merInputTextBox";
+            merInputTextBox.Size = new Size(100, 23);
+            merInputTextBox.TabIndex = 22;
+            // 
+            // usPowerInputTextBox
+            // 
+            usPowerInputTextBox.Location = new Point(97, 104);
+            usPowerInputTextBox.Name = "usPowerInputTextBox";
+            usPowerInputTextBox.Size = new Size(100, 23);
+            usPowerInputTextBox.TabIndex = 21;
+            // 
+            // dsPowerInputTextBox
+            // 
+            dsPowerInputTextBox.Location = new Point(97, 75);
+            dsPowerInputTextBox.Name = "dsPowerInputTextBox";
+            dsPowerInputTextBox.Size = new Size(100, 23);
+            dsPowerInputTextBox.TabIndex = 20;
+            // 
+            // dsnrInputTextBox
+            // 
+            dsnrInputTextBox.Location = new Point(97, 46);
+            dsnrInputTextBox.Name = "dsnrInputTextBox";
+            dsnrInputTextBox.Size = new Size(100, 23);
+            dsnrInputTextBox.TabIndex = 19;
+            // 
+            // snrPowerInputTextBox
+            // 
+            snrPowerInputTextBox.Location = new Point(97, 17);
+            snrPowerInputTextBox.Name = "snrPowerInputTextBox";
+            snrPowerInputTextBox.Size = new Size(100, 23);
+            snrPowerInputTextBox.TabIndex = 18;
+            // 
+            // merLabel
+            // 
+            merLabel.AutoSize = true;
+            merLabel.Location = new Point(7, 136);
+            merLabel.Name = "merLabel";
+            merLabel.Size = new Size(31, 15);
+            merLabel.TabIndex = 17;
+            merLabel.Text = "MER";
+            // 
+            // usPowerLabel
+            // 
+            usPowerLabel.AutoSize = true;
+            usPowerLabel.Location = new Point(7, 107);
+            usPowerLabel.Name = "usPowerLabel";
+            usPowerLabel.Size = new Size(79, 15);
+            usPowerLabel.TabIndex = 16;
+            usPowerLabel.Text = "US Power (Tx)";
+            // 
+            // dsPowerLabel
+            // 
+            dsPowerLabel.AutoSize = true;
+            dsPowerLabel.Location = new Point(7, 78);
+            dsPowerLabel.Name = "dsPowerLabel";
+            dsPowerLabel.Size = new Size(81, 15);
+            dsPowerLabel.TabIndex = 15;
+            dsPowerLabel.Text = "DS Power (Rx)";
+            // 
+            // dsnrLabel
+            // 
+            dsnrLabel.AutoSize = true;
+            dsnrLabel.Location = new Point(7, 49);
+            dsnrLabel.Name = "dsnrLabel";
+            dsnrLabel.Size = new Size(54, 15);
+            dsnrLabel.TabIndex = 14;
+            dsnrLabel.Text = "SNR (DS)";
+            // 
+            // snrLabel
+            // 
+            snrLabel.AutoSize = true;
+            snrLabel.Location = new Point(7, 20);
+            snrLabel.Name = "snrLabel";
+            snrLabel.Size = new Size(54, 15);
+            snrLabel.TabIndex = 13;
+            snrLabel.Text = "SNR (US)";
+            // 
+            // cblSigResultsTextBox
+            // 
+            cblSigResultsTextBox.Location = new Point(6, 192);
+            cblSigResultsTextBox.Multiline = true;
+            cblSigResultsTextBox.Name = "cblSigResultsTextBox";
+            cblSigResultsTextBox.Size = new Size(406, 425);
+            cblSigResultsTextBox.TabIndex = 12;
+            // 
+            // label7
+            // 
+            label7.AutoSize = true;
+            label7.Location = new Point(77, 174);
+            label7.Name = "label7";
+            label7.Size = new Size(271, 15);
+            label7.TabIndex = 26;
+            label7.Text = "Actual values will vary by carrier and specification.";
+            // 
+            // label8
+            // 
+            label8.AutoSize = true;
+            label8.Location = new Point(60, 159);
+            label8.Name = "label8";
+            label8.Size = new Size(306, 15);
+            label8.TabIndex = 25;
+            label8.Text = "***WARNING*** These values are for DOCIS 3.1 modems.";
             // 
             // Form1
             // 
@@ -1385,6 +1689,8 @@ namespace PingTool.NET
             tabPage2.PerformLayout();
             DSLsignal.ResumeLayout(false);
             DSLsignal.PerformLayout();
+            CableSignals.ResumeLayout(false);
+            CableSignals.PerformLayout();
             ResumeLayout(false);
         }
     }
