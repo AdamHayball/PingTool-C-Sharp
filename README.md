@@ -29,6 +29,8 @@ By the way, I had ChatGPT revise the README – quite amusing! XD
 - Added navigation tab for Cable
 - Added Cable signal comparison program (currently DOCSIS 3.1 only)
 - Changed WLS tab text to Cell
+- Added navigation tab for MAC OUI lookup
+- Added MAC Address Lookup program
 
 ## Version 1.5.1
 - Fixed RSRP overlapping values causing error in output

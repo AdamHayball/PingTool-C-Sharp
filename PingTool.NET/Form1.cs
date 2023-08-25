@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Text;
 using System.Windows.Forms;
 using System.Windows.Forms.DataVisualization.Charting;
+using Newtonsoft.Json.Linq;
 
 namespace PingTool.NET
 {
@@ -28,8 +29,8 @@ namespace PingTool.NET
         private Chart pingChart; // Add the pingChart field
         private LinkLabel linkLabel;
         private TabControl tabControl1;
-        private TabPage tabPage1;
-        private TabPage tabPage2;
+        private TabPage pingToolTab;
+        private TabPage cellSignalTab;
         private CheckBox checkBoxLTE;
         private CheckBox checkBox4G;
         private CheckBox checkBox3G;
@@ -48,7 +49,7 @@ namespace PingTool.NET
         private TextBox SigStrTextBox;
         private Label label6;
         private Button resetViaButton;
-        private TabPage DSLsignal;
+        private TabPage dslSignalTab;
         private Label snrMarginLabel;
         private Button dsResetButton;
         private Button dsRunButton;
@@ -62,7 +63,7 @@ namespace PingTool.NET
         private TextBox lineAttTextBox;
         private Label dslWarningLabel1;
         private Label dslWarningLabel2;
-        private TabPage CableSignals;
+        private TabPage cableSignalTab;
         private Label usPowerLabel;
         private Label dsPowerLabel;
         private Label dsnrLabel;
@@ -78,7 +79,14 @@ namespace PingTool.NET
         private Button cblSigRunButton;
         private Label label7;
         private Label label8;
+        private TabPage macOuiTab;
+        private TextBox macAddrOutputTextBox;
+        private TextBox macAddrInputTextbox;
+        private Label macAddrLabel;
+        private Button macAddrResetButton;
+        private Button lookupMacButton;
         private List<Task<string>> pingTasks = new List<Task<string>>(); // Moved pingTasks to class level
+        private const string OUIApiBaseUrl = "http://www.macvendorlookup.com/api/v2/";
 
         public Form1()
         {
@@ -916,6 +924,104 @@ namespace PingTool.NET
             merInputTextBox.Clear();
             cblSigResultsTextBox.Clear();
         }
+        //
+        //MAC OUI Lookup Tab
+        //
+        private async void LookupMacButton_Click(object sender, EventArgs e)
+        {
+            string macAddress = macAddrInputTextbox.Text;
+
+            if (!string.IsNullOrWhiteSpace(macAddress))
+            {
+                macAddrOutputTextBox.Text = "Please wait...";
+                macAddrOutputTextBox.Refresh(); // Force immediate update
+
+                string result = await PerformOuiLookupAsync(macAddress);
+
+                DisplayLookupResult(result);
+            }
+            else
+            {
+                macAddrOutputTextBox.Text = "Please enter a valid MAC address.";
+            }
+        }
+        private async Task<string> PerformOuiLookupAsync(string macAddress)
+        {
+            try
+            {
+                using (HttpClient client = new HttpClient())
+                {
+                    string apiUrl = $"{OUIApiBaseUrl}{macAddress}";
+                    string response = await client.GetStringAsync(apiUrl);
+                    return response;
+                }
+            }
+            catch (Exception ex)
+            {
+                return $"An error occurred: {ex.Message}";
+            }
+        }
+
+        private void MacAddrResetButton_Click(object sender, EventArgs e)
+        {
+            macAddrInputTextbox.Text = string.Empty;
+            macAddrOutputTextBox.Text = string.Empty;
+        }
+
+        private void DisplayLookupResult(string jsonResult)
+        {
+            try
+            {
+                // Check for 204 No Content response
+                if (string.IsNullOrEmpty(jsonResult))
+                {
+                    macAddrOutputTextBox.Text = "No information found for the given MAC address.";
+                    return;
+                }
+
+                JArray jsonArray = JArray.Parse(jsonResult);
+
+                if (jsonArray.Count > 0)
+                {
+                    JObject jsonObject = (JObject)jsonArray[0];
+
+                    string startHex = jsonObject["startHex"].ToString();
+                    string endHex = jsonObject["endHex"].ToString();
+                    string company = jsonObject["company"].ToString();
+                    string addressL1 = jsonObject["addressL1"].ToString();
+                    string addressL2 = jsonObject["addressL2"].ToString();
+                    string addressL3 = jsonObject["addressL3"].ToString();
+                    string country = jsonObject["country"].ToString();
+                    string type = jsonObject["type"].ToString();
+
+                    string formattedResult =
+                        $"Company:{Environment.NewLine}" +
+                        $"{company}{Environment.NewLine}" +
+                        $"Address:{Environment.NewLine}" +
+                        $"{addressL1}{Environment.NewLine}" +
+                        $"{addressL2}{Environment.NewLine}" +
+                        $"{addressL3}{Environment.NewLine}" +
+                        $"Country:{Environment.NewLine}" +
+                        $"{country}{Environment.NewLine}" +
+                        $"Type:{Environment.NewLine}" +
+                        $"{type}{Environment.NewLine}" +
+                        $"Start Hex:{Environment.NewLine}" +
+                        $"{startHex}{Environment.NewLine}" +
+                        $"End Hex:{Environment.NewLine}" +
+                        $"{endHex}";
+
+                    macAddrOutputTextBox.Text = formattedResult;
+                }
+                else
+                {
+                    macAddrOutputTextBox.Text = "No information found for the given MAC address.";
+                }
+            }
+            catch (Exception ex)
+            {
+                macAddrOutputTextBox.Text = $"Error parsing JSON: {ex.Message}";
+            }
+        }
         private void InitializeComponent()
         {
             ChartArea chartArea1 = new ChartArea();
@@ -937,8 +1043,8 @@ namespace PingTool.NET
             labelPacketSize = new Label();
             linkLabel = new LinkLabel();
             tabControl1 = new TabControl();
-            tabPage1 = new TabPage();
-            tabPage2 = new TabPage();
+            pingToolTab = new TabPage();
+            cellSignalTab = new TabPage();
             resetViaButton = new Button();
             SigStrTextBox = new TextBox();
             label6 = new Label();
@@ -957,7 +1063,7 @@ namespace PingTool.NET
             checkBoxLTE = new CheckBox();
             checkBox4G = new CheckBox();
             checkBox3G = new CheckBox();
-            DSLsignal = new TabPage();
+            dslSignalTab = new TabPage();
             dslWarningLabel2 = new Label();
             dslWarningLabel1 = new Label();
             transmitPowerTextBox = new TextBox();
@@ -971,7 +1077,9 @@ namespace PingTool.NET
             dsResetButton = new Button();
             dsRunButton = new Button();
             dslSignalOutputTextBox = new TextBox();
-            CableSignals = new TabPage();
+            cableSignalTab = new TabPage();
+            label7 = new Label();
+            label8 = new Label();
             cblSigResetButton = new Button();
             cblSigRunButton = new Button();
             merInputTextBox = new TextBox();
@@ -985,14 +1093,19 @@ namespace PingTool.NET
             dsnrLabel = new Label();
             snrLabel = new Label();
             cblSigResultsTextBox = new TextBox();
-            label7 = new Label();
-            label8 = new Label();
+            macOuiTab = new TabPage();
+            macAddrResetButton = new Button();
+            lookupMacButton = new Button();
+            macAddrOutputTextBox = new TextBox();
+            macAddrInputTextbox = new TextBox();
+            macAddrLabel = new Label();
             ((System.ComponentModel.ISupportInitialize)pingChart).BeginInit();
             tabControl1.SuspendLayout();
-            tabPage1.SuspendLayout();
-            tabPage2.SuspendLayout();
-            DSLsignal.SuspendLayout();
-            CableSignals.SuspendLayout();
+            pingToolTab.SuspendLayout();
+            cellSignalTab.SuspendLayout();
+            dslSignalTab.SuspendLayout();
+            cableSignalTab.SuspendLayout();
+            macOuiTab.SuspendLayout();
             SuspendLayout();
             // 
             // pingChart
@@ -1158,69 +1271,70 @@ namespace PingTool.NET
             // 
             // tabControl1
             // 
-            tabControl1.Controls.Add(tabPage1);
-            tabControl1.Controls.Add(tabPage2);
-            tabControl1.Controls.Add(DSLsignal);
-            tabControl1.Controls.Add(CableSignals);
+            tabControl1.Controls.Add(pingToolTab);
+            tabControl1.Controls.Add(cellSignalTab);
+            tabControl1.Controls.Add(dslSignalTab);
+            tabControl1.Controls.Add(cableSignalTab);
+            tabControl1.Controls.Add(macOuiTab);
             tabControl1.Location = new Point(1, 0);
             tabControl1.Name = "tabControl1";
             tabControl1.SelectedIndex = 0;
             tabControl1.Size = new Size(426, 648);
             tabControl1.TabIndex = 1;
             // 
-            // tabPage1
+            // pingToolTab
             // 
-            tabPage1.Controls.Add(pingChart);
-            tabPage1.Controls.Add(textBoxUsableIP);
-            tabPage1.Controls.Add(buttonCancel);
-            tabPage1.Controls.Add(textBoxNumPings);
-            tabPage1.Controls.Add(checkBoxSlowPings);
-            tabPage1.Controls.Add(linkLabel);
-            tabPage1.Controls.Add(checkBoxSaveToLogFile);
-            tabPage1.Controls.Add(labelPacketSize);
-            tabPage1.Controls.Add(outputTextBox);
-            tabPage1.Controls.Add(labelNumPings);
-            tabPage1.Controls.Add(buttonReset);
-            tabPage1.Controls.Add(labelUsableIP);
-            tabPage1.Controls.Add(buttonRunPing);
-            tabPage1.Controls.Add(labelGatewayIP);
-            tabPage1.Controls.Add(textBoxGatewayIP);
-            tabPage1.Controls.Add(textBoxPacketSize);
-            tabPage1.Location = new Point(4, 24);
-            tabPage1.Name = "tabPage1";
-            tabPage1.Padding = new Padding(3);
-            tabPage1.Size = new Size(418, 620);
-            tabPage1.TabIndex = 0;
-            tabPage1.Text = "Ping";
-            tabPage1.UseVisualStyleBackColor = true;
+            pingToolTab.Controls.Add(pingChart);
+            pingToolTab.Controls.Add(textBoxUsableIP);
+            pingToolTab.Controls.Add(buttonCancel);
+            pingToolTab.Controls.Add(textBoxNumPings);
+            pingToolTab.Controls.Add(checkBoxSlowPings);
+            pingToolTab.Controls.Add(linkLabel);
+            pingToolTab.Controls.Add(checkBoxSaveToLogFile);
+            pingToolTab.Controls.Add(labelPacketSize);
+            pingToolTab.Controls.Add(outputTextBox);
+            pingToolTab.Controls.Add(labelNumPings);
+            pingToolTab.Controls.Add(buttonReset);
+            pingToolTab.Controls.Add(labelUsableIP);
+            pingToolTab.Controls.Add(buttonRunPing);
+            pingToolTab.Controls.Add(labelGatewayIP);
+            pingToolTab.Controls.Add(textBoxGatewayIP);
+            pingToolTab.Controls.Add(textBoxPacketSize);
+            pingToolTab.Location = new Point(4, 24);
+            pingToolTab.Name = "pingToolTab";
+            pingToolTab.Padding = new Padding(3);
+            pingToolTab.Size = new Size(418, 620);
+            pingToolTab.TabIndex = 0;
+            pingToolTab.Text = "Ping";
+            pingToolTab.UseVisualStyleBackColor = true;
             // 
-            // tabPage2
+            // cellSignalTab
             // 
-            tabPage2.Controls.Add(resetViaButton);
-            tabPage2.Controls.Add(SigStrTextBox);
-            tabPage2.Controls.Add(label6);
-            tabPage2.Controls.Add(label5);
-            tabPage2.Controls.Add(label4);
-            tabPage2.Controls.Add(label3);
-            tabPage2.Controls.Add(label2);
-            tabPage2.Controls.Add(label1);
-            tabPage2.Controls.Add(CINRtextBox);
-            tabPage2.Controls.Add(runViaButton);
-            tabPage2.Controls.Add(RSSItextBox);
-            tabPage2.Controls.Add(ssOutputTextbox);
-            tabPage2.Controls.Add(SINRtextBox);
-            tabPage2.Controls.Add(RSRPtextBox);
-            tabPage2.Controls.Add(RSRQtextBox);
-            tabPage2.Controls.Add(checkBoxLTE);
-            tabPage2.Controls.Add(checkBox4G);
-            tabPage2.Controls.Add(checkBox3G);
-            tabPage2.Location = new Point(4, 24);
-            tabPage2.Name = "tabPage2";
-            tabPage2.Padding = new Padding(3);
-            tabPage2.Size = new Size(418, 620);
-            tabPage2.TabIndex = 1;
-            tabPage2.Text = "Cell";
-            tabPage2.UseVisualStyleBackColor = true;
+            cellSignalTab.Controls.Add(resetViaButton);
+            cellSignalTab.Controls.Add(SigStrTextBox);
+            cellSignalTab.Controls.Add(label6);
+            cellSignalTab.Controls.Add(label5);
+            cellSignalTab.Controls.Add(label4);
+            cellSignalTab.Controls.Add(label3);
+            cellSignalTab.Controls.Add(label2);
+            cellSignalTab.Controls.Add(label1);
+            cellSignalTab.Controls.Add(CINRtextBox);
+            cellSignalTab.Controls.Add(runViaButton);
+            cellSignalTab.Controls.Add(RSSItextBox);
+            cellSignalTab.Controls.Add(ssOutputTextbox);
+            cellSignalTab.Controls.Add(SINRtextBox);
+            cellSignalTab.Controls.Add(RSRPtextBox);
+            cellSignalTab.Controls.Add(RSRQtextBox);
+            cellSignalTab.Controls.Add(checkBoxLTE);
+            cellSignalTab.Controls.Add(checkBox4G);
+            cellSignalTab.Controls.Add(checkBox3G);
+            cellSignalTab.Location = new Point(4, 24);
+            cellSignalTab.Name = "cellSignalTab";
+            cellSignalTab.Padding = new Padding(3);
+            cellSignalTab.Size = new Size(418, 620);
+            cellSignalTab.TabIndex = 1;
+            cellSignalTab.Text = "Cell";
+            cellSignalTab.UseVisualStyleBackColor = true;
             // 
             // resetViaButton
             // 
@@ -1382,28 +1496,28 @@ namespace PingTool.NET
             checkBox3G.UseVisualStyleBackColor = true;
             checkBox3G.CheckedChanged += CheckBox3G_CheckedChanged;
             // 
-            // DSLsignal
+            // dslSignalTab
             // 
-            DSLsignal.Controls.Add(dslWarningLabel2);
-            DSLsignal.Controls.Add(dslWarningLabel1);
-            DSLsignal.Controls.Add(transmitPowerTextBox);
-            DSLsignal.Controls.Add(lineAttTextBox);
-            DSLsignal.Controls.Add(loopLengthTextBox);
-            DSLsignal.Controls.Add(snrMarginTextBox);
-            DSLsignal.Controls.Add(transmitPowerLabel);
-            DSLsignal.Controls.Add(lineAttLabel);
-            DSLsignal.Controls.Add(loopLengthLabel);
-            DSLsignal.Controls.Add(snrMarginLabel);
-            DSLsignal.Controls.Add(dsResetButton);
-            DSLsignal.Controls.Add(dsRunButton);
-            DSLsignal.Controls.Add(dslSignalOutputTextBox);
-            DSLsignal.Location = new Point(4, 24);
-            DSLsignal.Name = "DSLsignal";
-            DSLsignal.Padding = new Padding(3);
-            DSLsignal.Size = new Size(418, 620);
-            DSLsignal.TabIndex = 2;
-            DSLsignal.Text = "DSL";
-            DSLsignal.UseVisualStyleBackColor = true;
+            dslSignalTab.Controls.Add(dslWarningLabel2);
+            dslSignalTab.Controls.Add(dslWarningLabel1);
+            dslSignalTab.Controls.Add(transmitPowerTextBox);
+            dslSignalTab.Controls.Add(lineAttTextBox);
+            dslSignalTab.Controls.Add(loopLengthTextBox);
+            dslSignalTab.Controls.Add(snrMarginTextBox);
+            dslSignalTab.Controls.Add(transmitPowerLabel);
+            dslSignalTab.Controls.Add(lineAttLabel);
+            dslSignalTab.Controls.Add(loopLengthLabel);
+            dslSignalTab.Controls.Add(snrMarginLabel);
+            dslSignalTab.Controls.Add(dsResetButton);
+            dslSignalTab.Controls.Add(dsRunButton);
+            dslSignalTab.Controls.Add(dslSignalOutputTextBox);
+            dslSignalTab.Location = new Point(4, 24);
+            dslSignalTab.Name = "dslSignalTab";
+            dslSignalTab.Padding = new Padding(3);
+            dslSignalTab.Size = new Size(418, 620);
+            dslSignalTab.TabIndex = 2;
+            dslSignalTab.Text = "DSL";
+            dslSignalTab.UseVisualStyleBackColor = true;
             // 
             // dslWarningLabel2
             // 
@@ -1517,30 +1631,48 @@ namespace PingTool.NET
             dslSignalOutputTextBox.Size = new Size(400, 431);
             dslSignalOutputTextBox.TabIndex = 0;
             // 
-            // CableSignals
+            // cableSignalTab
             // 
-            CableSignals.Controls.Add(label7);
-            CableSignals.Controls.Add(label8);
-            CableSignals.Controls.Add(cblSigResetButton);
-            CableSignals.Controls.Add(cblSigRunButton);
-            CableSignals.Controls.Add(merInputTextBox);
-            CableSignals.Controls.Add(usPowerInputTextBox);
-            CableSignals.Controls.Add(dsPowerInputTextBox);
-            CableSignals.Controls.Add(dsnrInputTextBox);
-            CableSignals.Controls.Add(snrPowerInputTextBox);
-            CableSignals.Controls.Add(merLabel);
-            CableSignals.Controls.Add(usPowerLabel);
-            CableSignals.Controls.Add(dsPowerLabel);
-            CableSignals.Controls.Add(dsnrLabel);
-            CableSignals.Controls.Add(snrLabel);
-            CableSignals.Controls.Add(cblSigResultsTextBox);
-            CableSignals.Location = new Point(4, 24);
-            CableSignals.Name = "CableSignals";
-            CableSignals.Padding = new Padding(3);
-            CableSignals.Size = new Size(418, 620);
-            CableSignals.TabIndex = 3;
-            CableSignals.Text = "Cable";
-            CableSignals.UseVisualStyleBackColor = true;
+            cableSignalTab.Controls.Add(label7);
+            cableSignalTab.Controls.Add(label8);
+            cableSignalTab.Controls.Add(cblSigResetButton);
+            cableSignalTab.Controls.Add(cblSigRunButton);
+            cableSignalTab.Controls.Add(merInputTextBox);
+            cableSignalTab.Controls.Add(usPowerInputTextBox);
+            cableSignalTab.Controls.Add(dsPowerInputTextBox);
+            cableSignalTab.Controls.Add(dsnrInputTextBox);
+            cableSignalTab.Controls.Add(snrPowerInputTextBox);
+            cableSignalTab.Controls.Add(merLabel);
+            cableSignalTab.Controls.Add(usPowerLabel);
+            cableSignalTab.Controls.Add(dsPowerLabel);
+            cableSignalTab.Controls.Add(dsnrLabel);
+            cableSignalTab.Controls.Add(snrLabel);
+            cableSignalTab.Controls.Add(cblSigResultsTextBox);
+            cableSignalTab.Location = new Point(4, 24);
+            cableSignalTab.Name = "cableSignalTab";
+            cableSignalTab.Padding = new Padding(3);
+            cableSignalTab.Size = new Size(418, 620);
+            cableSignalTab.TabIndex = 3;
+            cableSignalTab.Text = "Cable";
+            cableSignalTab.UseVisualStyleBackColor = true;
+            // 
+            // label7
+            // 
+            label7.AutoSize = true;
+            label7.Location = new Point(77, 174);
+            label7.Name = "label7";
+            label7.Size = new Size(271, 15);
+            label7.TabIndex = 26;
+            label7.Text = "Actual values will vary by carrier and specification.";
+            // 
+            // label8
+            // 
+            label8.AutoSize = true;
+            label8.Location = new Point(60, 159);
+            label8.Name = "label8";
+            label8.Size = new Size(306, 15);
+            label8.TabIndex = 25;
+            label8.Text = "***WARNING*** These values are for DOCIS 3.1 modems.";
             // 
             // cblSigResetButton
             // 
@@ -1652,23 +1784,66 @@ namespace PingTool.NET
             cblSigResultsTextBox.Size = new Size(406, 425);
             cblSigResultsTextBox.TabIndex = 12;
             // 
-            // label7
+            // macOuiTab
             // 
-            label7.AutoSize = true;
-            label7.Location = new Point(77, 174);
-            label7.Name = "label7";
-            label7.Size = new Size(271, 15);
-            label7.TabIndex = 26;
-            label7.Text = "Actual values will vary by carrier and specification.";
+            macOuiTab.Controls.Add(macAddrResetButton);
+            macOuiTab.Controls.Add(lookupMacButton);
+            macOuiTab.Controls.Add(macAddrOutputTextBox);
+            macOuiTab.Controls.Add(macAddrInputTextbox);
+            macOuiTab.Controls.Add(macAddrLabel);
+            macOuiTab.Location = new Point(4, 24);
+            macOuiTab.Name = "macOuiTab";
+            macOuiTab.Padding = new Padding(3);
+            macOuiTab.Size = new Size(418, 620);
+            macOuiTab.TabIndex = 4;
+            macOuiTab.Text = "MAC OUI";
+            macOuiTab.UseVisualStyleBackColor = true;
             // 
-            // label8
+            // macAddrResetButton
             // 
-            label8.AutoSize = true;
-            label8.Location = new Point(60, 159);
-            label8.Name = "label8";
-            label8.Size = new Size(306, 15);
-            label8.TabIndex = 25;
-            label8.Text = "***WARNING*** These values are for DOCIS 3.1 modems.";
+            macAddrResetButton.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point);
+            macAddrResetButton.Location = new Point(250, 48);
+            macAddrResetButton.Name = "macAddrResetButton";
+            macAddrResetButton.Size = new Size(147, 32);
+            macAddrResetButton.TabIndex = 26;
+            macAddrResetButton.Text = "Reset";
+            macAddrResetButton.UseVisualStyleBackColor = true;
+            macAddrResetButton.Click += MacAddrResetButton_Click;
+            // 
+            // lookupMacButton
+            // 
+            lookupMacButton.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point);
+            lookupMacButton.Location = new Point(97, 48);
+            lookupMacButton.Name = "lookupMacButton";
+            lookupMacButton.Size = new Size(147, 32);
+            lookupMacButton.TabIndex = 25;
+            lookupMacButton.Text = "Lookup MAC";
+            lookupMacButton.UseVisualStyleBackColor = true;
+            lookupMacButton.Click += LookupMacButton_Click;
+            // 
+            // macAddrOutputTextBox
+            // 
+            macAddrOutputTextBox.Location = new Point(6, 86);
+            macAddrOutputTextBox.Multiline = true;
+            macAddrOutputTextBox.Name = "macAddrOutputTextBox";
+            macAddrOutputTextBox.Size = new Size(406, 528);
+            macAddrOutputTextBox.TabIndex = 13;
+            // 
+            // macAddrInputTextbox
+            // 
+            macAddrInputTextbox.Location = new Point(88, 19);
+            macAddrInputTextbox.Name = "macAddrInputTextbox";
+            macAddrInputTextbox.Size = new Size(324, 23);
+            macAddrInputTextbox.TabIndex = 1;
+            // 
+            // macAddrLabel
+            // 
+            macAddrLabel.AutoSize = true;
+            macAddrLabel.Location = new Point(3, 22);
+            macAddrLabel.Name = "macAddrLabel";
+            macAddrLabel.Size = new Size(79, 15);
+            macAddrLabel.TabIndex = 0;
+            macAddrLabel.Text = "MAC Address";
             // 
             // Form1
             // 
@@ -1683,14 +1858,16 @@ namespace PingTool.NET
             Text = "Ping Tool";
             ((System.ComponentModel.ISupportInitialize)pingChart).EndInit();
             tabControl1.ResumeLayout(false);
-            tabPage1.ResumeLayout(false);
-            tabPage1.PerformLayout();
-            tabPage2.ResumeLayout(false);
-            tabPage2.PerformLayout();
-            DSLsignal.ResumeLayout(false);
-            DSLsignal.PerformLayout();
-            CableSignals.ResumeLayout(false);
-            CableSignals.PerformLayout();
+            pingToolTab.ResumeLayout(false);
+            pingToolTab.PerformLayout();
+            cellSignalTab.ResumeLayout(false);
+            cellSignalTab.PerformLayout();
+            dslSignalTab.ResumeLayout(false);
+            dslSignalTab.PerformLayout();
+            cableSignalTab.ResumeLayout(false);
+            cableSignalTab.PerformLayout();
+            macOuiTab.ResumeLayout(false);
+            macOuiTab.PerformLayout();
             ResumeLayout(false);
         }
     }

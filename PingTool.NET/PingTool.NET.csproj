@@ -15,6 +15,7 @@
 		</PropertyGroup>
 		<ItemGroup>
 			<PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+			<PackageReference Include="Remote.Linq.Newtonsoft.Json" Version="7.1.0" />
 			<PackageReference Include="System.Data.DataSetExtensions" Version="4.6.0-preview3.19128.7" />
 			<PackageReference Include="WinForms.DataVisualization" Version="1.8.0" />
 		</ItemGroup>
