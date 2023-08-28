@@ -995,20 +995,14 @@ namespace PingTool.NET
                     string type = jsonObject["type"].ToString();
 
                     string formattedResult =
-                        $"Company:{Environment.NewLine}" +
                         $"{company}{Environment.NewLine}" +
-                        $"Address:{Environment.NewLine}" +
                         $"{addressL1}{Environment.NewLine}" +
                         $"{addressL2}{Environment.NewLine}" +
                         $"{addressL3}{Environment.NewLine}" +
-                        $"Country:{Environment.NewLine}" +
-                        $"{country}{Environment.NewLine}" +
-                        $"Type:{Environment.NewLine}" +
-                        $"{type}{Environment.NewLine}" +
-                        $"Start Hex:{Environment.NewLine}" +
-                        $"{startHex}{Environment.NewLine}" +
-                        $"End Hex:{Environment.NewLine}" +
-                        $"{endHex}";
+                        $"Country: {country}{Environment.NewLine}" +
+                        $"Type: {type}{Environment.NewLine}" +
+                        $"Start Hex: {startHex}{Environment.NewLine}" +
+                        $"End Hex: {endHex}";
 
                     macAddrOutputTextBox.Text = formattedResult;
                 }

@@ -25,6 +25,9 @@ As an additional point, I must acknowledge that I haven't yet attained mastery i
 
 By the way, I had ChatGPT revise the README – quite amusing! XD
 
+## Version 1.6.1
+- Changed MAC lookup tool results formatting
+
 ## Version 1.6.0
 - Added navigation tab for Cable
 - Added Cable signal comparison program (currently DOCSIS 3.1 only)
