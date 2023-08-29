@@ -636,9 +636,9 @@ namespace PingTool.NET
         private string GetRsrqResult(double value)
         {
             if (value >= 0) return "Error! Enter negative number";
-            if (value <= -20) return "Cell Edge";
-            if (value >= -15 && value <= -19) return "Mid Cell";
-            if (value >= -10 && value <= -14) return "Good";
+            if (value <= -21) return "Cell Edge";
+            if (value >= -20 && value <= -16) return "Mid Cell";
+            if (value >= -15 && value <= -11) return "Good";
             if (value >= -10) return "Excellent";
             return "Invalid value";
         }
