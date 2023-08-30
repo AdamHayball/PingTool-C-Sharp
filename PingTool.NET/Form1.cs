@@ -698,10 +698,12 @@ namespace PingTool.NET
             lineAttTextBox.Clear();
             transmitPowerTextBox.Clear();
         }
+
         private void ClearOutputField()
         {
             dslSignalOutputTextBox.Clear();
         }
+
         private void dsRunButton_Click(object sender, EventArgs e)
         {
             string snrMarginInput = snrMarginTextBox.Text;
@@ -710,9 +712,9 @@ namespace PingTool.NET
             string transmitPowerInput = transmitPowerTextBox.Text;
 
             if (string.IsNullOrWhiteSpace(snrMarginInput) ||
-            string.IsNullOrWhiteSpace(loopLengthInput) ||
-            string.IsNullOrWhiteSpace(lineAttenuationInput) ||
-            string.IsNullOrWhiteSpace(transmitPowerInput))
+                string.IsNullOrWhiteSpace(loopLengthInput) ||
+                string.IsNullOrWhiteSpace(lineAttenuationInput) ||
+                string.IsNullOrWhiteSpace(transmitPowerInput))
             {
                 dslSignalOutputTextBox.Text = "Please enter valid input values.";
                 return;
@@ -733,7 +735,7 @@ namespace PingTool.NET
 
         private string GetSNRMarginOutput(string input)
         {
-            int snrMarginValue = int.Parse(input);
+            double snrMarginValue = double.Parse(input);
 
             string snrMarginUnit = "dB";
             string snrMarginLevel = "";
@@ -754,14 +756,14 @@ namespace PingTool.NET
         {
             double loopLengthValue = double.Parse(input);
 
-            string loopLengthUnit = "mile";
+            string loopLengthUnit = "feet";
             string loopLengthLevel = "";
 
-            if (loopLengthValue < 1.6)
+            if (loopLengthValue < 5280)
                 loopLengthLevel = "Excellent";
-            else if (loopLengthValue >= 1.6 && loopLengthValue <= 3.2)
+            else if (loopLengthValue >= 5280 && loopLengthValue <= 10560)
                 loopLengthLevel = "Good";
-            else if (loopLengthValue > 3.2)
+            else if (loopLengthValue > 10560)
                 loopLengthLevel = "Fair to Poor";
             else
                 loopLengthLevel = "Poor";
@@ -771,7 +773,7 @@ namespace PingTool.NET
 
         private string GetLineAttenuationOutput(string input)
         {
-            int lineAttenuationValue = int.Parse(input);
+            double lineAttenuationValue = double.Parse(input);
 
             string lineAttenuationUnit = "dB";
             string lineAttenuationLevel = "";
@@ -790,7 +792,7 @@ namespace PingTool.NET
 
         private string GetTransmitPowerOutput(string input)
         {
-            int transmitPowerValue = int.Parse(input);
+            double transmitPowerValue = double.Parse(input);
 
             string transmitPowerUnit = "dBm";
             string transmitPowerLevel = "";
