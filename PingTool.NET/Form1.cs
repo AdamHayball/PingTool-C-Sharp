@@ -120,7 +120,7 @@ namespace PingTool.NET
                 // Use the default web browser to open the URL
                 Process.Start(new ProcessStartInfo
                 {
-                    FileName = "https://github.com/AdamHayball/PingTool-C-Sharp",
+                    FileName = "https://github.com/AdamHayball/PingTool-C-Sharp/blob/main/cd.md",
                     UseShellExecute = true
                 });
             }
