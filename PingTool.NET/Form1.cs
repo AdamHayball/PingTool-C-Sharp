@@ -585,9 +585,9 @@ namespace PingTool.NET
         private string GetSignalStrengthResult(double value)
         {
             if (value <= 0) return "Error! Enter positive number";
-            if (value >= 1 && value <= 25) return "Unacceptable";
-            if (value >= 26 && value <= 50) return "Borderline";
-            if (value >= 51 && value <= 75) return "Good";
+            if (value >= 1 && value <= 25.9) return "Unacceptable";
+            if (value >= 26 && value <= 50.9) return "Borderline";
+            if (value >= 51 && value <= 75.9) return "Good";
             if (value >= 76 && value <= 100) return "Excellent";
             return "Invalid value";
         }
@@ -597,26 +597,26 @@ namespace PingTool.NET
             if (!is3GChecked && !is4GChecked && !isLTEChecked)
             {
                 // Default to 4G/LTE logic
-                if (value >= -100 && value <= -80) return "Unacceptable";
-                if (value >= -79 && value <= -70) return "Borderline";
-                if (value >= -69 && value <= -50) return "Good";
-                if (value >= -49 && value <= -40) return "Excellent";
+                if (value >= -100.9 && value <= -80) return "Unacceptable";
+                if (value >= -79.9 && value <= -70) return "Borderline";
+                if (value >= -69.9 && value <= -50) return "Good";
+                if (value >= -49.9 && value <= -40) return "Excellent";
                 if (value >= 0) return "Error! Enter negative number";
             }
             else if (is3GChecked)
             {
-                if (value >= -100 && value <= -90) return "Unacceptable";
-                if (value >= -89 && value <= -80) return "Borderline";
-                if (value >= -79 && value <= -60) return "Good";
-                if (value >= -59 && value <= -50) return "Excellent";
+                if (value >= -100.9 && value <= -90) return "Unacceptable";
+                if (value >= -89.9 && value <= -80) return "Borderline";
+                if (value >= -79.9 && value <= -60) return "Good";
+                if (value >= -59.9 && value <= -50) return "Excellent";
                 if (value >= 0) return "Error! Enter negative number";
             }
             else if (is4GChecked || isLTEChecked)
             {
-                if (value >= -100 && value <= -80) return "Unacceptable";
-                if (value >= -79 && value <= -70) return "Borderline";
-                if (value >= -69 && value <= -50) return "Good";
-                if (value >= -49 && value <= -40) return "Excellent";
+                if (value >= -100.9 && value <= -80) return "Unacceptable";
+                if (value >= -79.9 && value <= -70) return "Borderline";
+                if (value >= -69.9 && value <= -50) return "Good";
+                if (value >= -49.9 && value <= -40) return "Excellent";
                 if (value >= 0) return "Error! Enter negative number";
             }
 
@@ -626,9 +626,9 @@ namespace PingTool.NET
         private string GetRsrpResult(double value)
         {
             if (value >= 0) return "Error! Enter a negative number";
-            if (value <= -100) return "Cell Edge";
-            if (value <= -90) return "Mid Cell";
-            if (value <= -80) return "Good";
+            if (value <= -100.9) return "Cell Edge";
+            if (value <= -90.9) return "Mid Cell";
+            if (value <= -80.9) return "Good";
             if (value > -80) return "Excellent";
             return "Invalid value";
         }
@@ -637,18 +637,18 @@ namespace PingTool.NET
         {
             if (value >= 0) return "Error! Enter negative number";
             if (value <= -21) return "Cell Edge";
-            if (value >= -20 && value <= -16) return "Mid Cell";
-            if (value >= -15 && value <= -11) return "Good";
-            if (value >= -10) return "Excellent";
+            if (value >= -20.9 && value <= -16) return "Mid Cell";
+            if (value >= -15.9 && value <= -11) return "Good";
+            if (value >= -10.9) return "Excellent";
             return "Invalid value";
         }
 
         private string GetSinrResult(double value)
         {
             if (value <= 0) return "High Interference Noise";
-            if (value < 5) return "Unstable";
-            if (value >= 6 && value <= 9) return "Signal Dependent";
-            if (value >= 10 && value <= 14) return "Good";
+            if (value < 5.9) return "Unstable";
+            if (value >= 6 && value <= 9.9) return "Signal Dependent";
+            if (value >= 10 && value <= 14.9) return "Good";
             if (value >= 15) return "Excellent";
             return "Invalid value";
         }
@@ -656,9 +656,9 @@ namespace PingTool.NET
         private string GetCinrResult(double value)
         {
             if (value <= 0) return "High Interference Noise";
-            if (value < 5) return "Unstable";
-            if (value >= 6 && value <= 9) return "Signal Dependent";
-            if (value >= 10 && value <= 14) return "Good";
+            if (value < 5.9) return "Unstable";
+            if (value >= 6 && value <= 9.9) return "Signal Dependent";
+            if (value >= 10 && value <= 14.9) return "Good";
             if (value >= 15) return "Excellent";
             return "Invalid value";
         }

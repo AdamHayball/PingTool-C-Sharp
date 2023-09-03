@@ -19,6 +19,9 @@
 
 
 ## Change Log:
+### Version 1.6.4
+- Fixed decimal logic for SINR
+
 ### Version 1.6.3
 - Fixed DSL issue of decimal entries crashing program
 - Changed unit of measurement from miles to feet in DSL program
